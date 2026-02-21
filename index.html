@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeroBeats - Underground Decentralized Music</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- EPOCH Verification Gate - blocks access until EPOCH is enabled with dApp Chooses -->
+    <div id="epochGate" class="epoch-gate">
+        <div class="epoch-gate-content">
+            <div class="epoch-gate-logo-wrap">
+                <img src="https://raw.githubusercontent.com/KalinaLux/derobeats/main/img/gate-logo.png" alt="" class="epoch-gate-logo">
+            </div>
+            <div class="epoch-gate-cursor-zone">
+                <div class="epoch-gate-scroll-hint" aria-hidden="true">&#9662;</div>
+            </div>
+            <div class="epoch-gate-instructions">
+                <p class="epoch-gate-welcome">Original music. On-chain. Powered by Epoch.</p>
+                <div id="epochGateStatus" class="epoch-gate-status">
+                    <button id="epochGateConnectBtn" class="epoch-gate-connect-btn">Enter DeroBeats</button>
+                </div>
+                <p id="epochGateError" class="epoch-gate-error" style="display:none;"></p>
+
+                <details class="epoch-gate-setup-details">
+                    <summary class="epoch-gate-setup-toggle">First time? Set up your wallet</summary>
+                    <div class="epoch-gate-setup-inner">
+                        <div class="epoch-gate-columns">
+                            <div class="epoch-gate-col">
+                                <h4 class="epoch-gate-col-title">CyberDeck</h4>
+                                <ol class="epoch-gate-steps">
+                                    <li>Open CyberDeck</li>
+                                    <li>Click Settings</li>
+                                    <li>Under Epoch Preferences, set:
+                                        <ul>
+                                            <li>Allow</li>
+                                            <li>dApp Chooses</li>
+                                            <li>More Power</li>
+                                        </ul>
+                                    </li>
+                                    <li>Restrictive Mode <strong>OFF</strong></li>
+                                    <li>Turn CyberDeck <strong>ON</strong></li>
+                                </ol>
+                            </div>
+                            <div class="epoch-gate-col">
+                                <h4 class="epoch-gate-col-title">Tela</h4>
+                                <ol class="epoch-gate-steps">
+                                    <li>Go to Settings</li>
+                                    <li>Restrictive Mode <strong>OFF</strong></li>
+                                    <li>Click Allow</li>
+                                    <li>Enable Allow Content Updates</li>
+                                    <li>Enable Allow Rescan</li>
+                                </ol>
+                            </div>
+                        </div>
+                        <div class="epoch-gate-closing">
+                            <p class="epoch-gate-link-wrap">Need help? <a href="https://dero.world/anotherworld/how-to-access-feed-and-make-a-post-or-comment/" target="_blank" rel="noopener">Full walkthrough here</a>. Same settings as FEED.</p>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1><img src="https://raw.githubusercontent.com/KalinaLux/derobeats/main/img/logo.png" alt="DeroBeats" class="logo-img"></h1>
+                <p class="tagline">Unreleased. Unalgorithmed. Uncontrolled.</p>
+            </div>
+            <div class="wallet-section">
+                <div class="status-indicators">
+                    <div id="redIndicator" class="indicator red active"></div>
+                    <div id="yellowIndicator" class="indicator yellow"></div>
+                    <div id="greenIndicator" class="indicator green"></div>
+                </div>
+                <button id="connectButton" class="connect-btn">Connect Wallet</button>
+                <div id="walletAddress" class="wallet-address"></div>
+                <div id="balance" class="balance"></div>
+            </div>
+        </div>
+    </header>
+    <div id="notificationSlot" class="notification-slot" aria-live="polite"></div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h2 class="glitch" data-text="Dero's On-Chain, Underground Music Scene">Dero's On-Chain, Underground Music Scene</h2>
+            <p class="hero-sub">Decentralized. Permissionless. Powered by Epoch.</p>
+        </div>
+    </section>
+
+    <!-- Pending registration (from upload page) -->
+    <div id="registerBanner" class="register-banner" style="display:none;">
+        <div class="container">
+            <h3>📝 Register your song on chain</h3>
+            <p id="registerSummary"></p>
+            <button id="registerNowBtn" class="register-btn">Register via Engram</button>
+            <button id="dismissRegisterBtn" class="dismiss-btn">Dismiss</button>
+        </div>
+    </div>
+
+    <!-- THE PROTOCOL -->
+    <section class="info-section protocol-section">
+        <div class="container">
+            <h2>THE PROTOCOL</h2>
+            <div class="protocol-grid">
+                <div class="protocol-col protocol-create">
+                    <h4>Create</h4>
+                    <p>Publish original tracks. On-chain. Exclusive.</p>
+                    <p>No reposts. No mirrors. No duplicates.</p>
+                    <p>Only originals survive here.</p>
+                </div>
+                <div class="protocol-col protocol-mine">
+                    <h4>Mine</h4>
+                    <p>Play tracks. Direct your hash power.</p>
+                    <p>Support artists without spending a cent.</p>
+                    <p>Epoch flows straight to their wallet.</p>
+                </div>
+                <div class="protocol-col protocol-boost">
+                    <h4>Boost</h4>
+                    <p>Push the strongest tracks up the chain.</p>
+                    <p>No algorithm. No gatekeepers.</p>
+                    <p>Only the network decides.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Songs Section -->
+    <section class="songs-section">
+        <div class="container">
+            <div class="songs-section-header">
+                <div class="section-tabs">
+                    <button class="section-tab active" data-tab="tracks">Featured Tracks</button>
+                    <button class="section-tab" data-tab="playlists">My Playlists</button>
+                </div>
+                <div class="songs-section-actions">
+                    <button type="button" class="refresh-btn upload-link-btn" id="openUploadModalBtn" title="Upload your track">↑ Upload your track</button>
+                    <button id="refreshSongsBtn" class="refresh-btn" title="Reload songs from registry">↻ Refresh</button>
+                </div>
+            </div>
+            <div class="sort-filter-bar" id="sortFilterBar">
+                <div class="sort-buttons">
+                    <button class="sort-btn active" data-sort="top">Top</button>
+                    <button class="sort-btn" data-sort="mostplayed">Most Played</button>
+                    <button class="sort-btn" data-sort="newest">Newest</button>
+                    <button class="sort-btn" data-sort="az">A–Z</button>
+                </div>
+                <div class="filter-dropdowns">
+                    <select id="filterGenre" class="filter-select">
+                        <option value="">All Genres</option>
+                    </select>
+                    <select id="filterArtist" class="filter-select">
+                        <option value="">All Artists</option>
+                    </select>
+                </div>
+            </div>
+            <div class="playlist-bar" id="playlistBar" style="display:none">
+                <select id="playlistSelect" class="playlist-dropdown"><option value="">Select a playlist</option></select>
+                <button id="newPlaylistBtn" class="playlist-bar-btn" title="Create new playlist">+ New</button>
+                <button id="importPlaylistBtn" class="playlist-bar-btn" title="Import a shared playlist">Import</button>
+                <span class="playlist-active-actions" style="display:none"></span>
+            </div>
+            <!-- Custom playlist prompt modal -->
+            <div class="pl-modal-overlay" id="plModalOverlay">
+                <div class="pl-modal">
+                    <button class="pl-modal-close" id="plModalClose" title="Close">&times;</button>
+                    <p class="pl-modal-title" id="plModalTitle">Playlist name</p>
+                    <input type="text" class="pl-modal-input" id="plModalInput" autocomplete="off" spellcheck="false">
+                    <div class="pl-modal-btns">
+                        <button class="pl-modal-cancel" id="plModalCancel">Cancel</button>
+                        <button class="pl-modal-ok" id="plModalOk">OK</button>
+                    </div>
+                </div>
+            </div>
+            <div class="songs-grid" id="songsGrid">
+                <!-- Demo placeholder (replaced by registry songs when loaded) -->
+                <div class="song-card song-card-demo">
+                    <div class="song-artwork">
+                        <img src="https://gateway.pinata.cloud/ipfs/bafybeieqp3vmodc6uevywxgrruedji4bjq7fo2dgdxaid777hzwvox7fqa" alt="Pixi.exe artwork">
+                    </div>
+                    <div class="song-info">
+                        <h3 class="song-title">Demo Track</h3>
+                        <p class="artist-name">Pixi.exe</p>
+                        <div class="song-tags">
+                            <span class="tag">Demo</span>
+                        </div>
+                    </div>
+                    <div class="player-section">
+                        <audio class="audio-player" id="player-demo" controls>
+                            <source src="https://gateway.pinata.cloud/ipfs/bafybeia3lsbqkt5vhpjpooxjiaaox3ce26mbkakvf5wwjehsls5gfp6auu" type="audio/mpeg">
+                            Your browser does not support audio playback.
+                        </audio>
+                    </div>
+                    <div class="mining-section">
+                        <button class="mine-btn" style="display:none"
+                                data-artist="dero1qygfgg5hq4fracps4q8cxwzvyjvmh85kewfwc75nxnfpg6grsr4nyqqket86l"
+                                data-song-id="demo"
+                                data-hashes="1000"
+                                data-song-name="Demo Track"></button>
+                        <div class="song-actions">
+                            <button class="upvote-btn button-ghost" data-song-scid="">👍 Upvote</button>
+                        </div>
+                        <div class="mining-stats">
+                            <div class="stat">
+                                <span class="stat-label">Session:</span>
+                                <span class="stat-value" id="demo-session">0 hashes</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- (Artists upload section moved to upload.html as full directions) -->
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="global-stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="songsAvailable">0</div>
+                    <div class="stat-label">Songs On-Chain</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="sessionSupport">0</div>
+                    <div class="stat-label">Hashes Sent to Artists</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalArtists">0</div>
+                    <div class="stat-label">Artists</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section footer-brand">
+                    <h3><img src="https://raw.githubusercontent.com/KalinaLux/derobeats/main/img/default-art.png" alt="DeroBeats" class="logo-img-footer"></h3>
+                    <p class="footer-tagline">Unreleased. Unalgorithmed. Uncontrolled.</p>
+                    <p class="footer-made">Made with ❤️ for the DERO community</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Upload modal (iframe keeps wallet connected) -->
+    <div class="upload-modal-overlay" id="uploadModalOverlay">
+        <div class="upload-modal">
+            <button type="button" class="upload-modal-close-x" id="uploadModalCloseBtn" aria-label="Close">×</button>
+            <iframe id="uploadFrame" src="about:blank" title="Upload your track"></iframe>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/xswd.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

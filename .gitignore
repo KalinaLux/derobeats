@@ -1,0 +1,21 @@
+.DS_Store
+  *.command
+  
+  # Only ship site files -- exclude everything else in the workspace root
+  *.md
+  !README.md
+  *.txt
+  *.bas
+  !derobeats-registry-mv5.bas
+  graveyard-bas/
+  
+  # Dev-only assets
+  artwork/
+  style-switcher.html
+  css/style-brand-version.css
+  
+  # Internal docs (keep only CURLS.md and REGISTRY_SETUP.md)
+  docs/*
+  !docs/CURLS.md
+  !docs/REGISTRY_SETUP.md
+  

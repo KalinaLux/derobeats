@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload to IPFS - DeroBeats</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .upload-container {
+            max-width: 100%;
+            padding: 36px 32px;
+            background: linear-gradient(160deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04));
+            border: 1px solid var(--glass-border);
+            border-radius: 6px;
+        }
+        .upload-container h1 {
+            font-family: var(--font-heading);
+            font-size: 1.6rem;
+            color: var(--captain-green, #00ffc3);
+            margin-bottom: 6px;
+        }
+        .upload-container .subtitle {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--smoke);
+            letter-spacing: 0.1em;
+            margin-bottom: 32px;
+        }
+        .upload-form .form-group {
+            margin-bottom: 20px;
+        }
+        .upload-form label {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--mist);
+            margin-bottom: 6px;
+        }
+        .upload-form input[type="file"] {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--graphite);
+            border: 1px solid var(--glass-border);
+            border-radius: 4px;
+            color: var(--ghost);
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            transition: border-color 0.2s;
+        }
+        .upload-form input[type="text"],
+        .upload-form input[type="password"] {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--graphite);
+            border: 1px solid var(--glass-border);
+            border-radius: 4px;
+            color: var(--ghost);
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            transition: border-color 0.2s;
+        }
+        .upload-form input:focus {
+            outline: none;
+            border-color: var(--captain-green, #00ffc3);
+            box-shadow: 0 0 0 2px rgba(0, 255, 195, 0.08);
+        }
+        .upload-form input::placeholder {
+            color: var(--ash);
+        }
+        .genre-select {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--graphite);
+            border: 1px solid var(--glass-border);
+            border-radius: 4px;
+            color: var(--ghost);
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            transition: border-color 0.2s;
+        }
+        .genre-select:focus {
+            outline: none;
+            border-color: var(--captain-green, #00ffc3);
+            box-shadow: 0 0 0 2px rgba(0, 255, 195, 0.08);
+        }
+        .upload-form .hint {
+            font-size: 0.72rem;
+            color: var(--smoke);
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+        .upload-form .hint a {
+            color: var(--hot-pink);
+        }
+        .upload-btn {
+            width: 100%;
+            padding: 14px;
+            font-family: var(--font-mono);
+            font-weight: 600;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--void, #0a0a0f);
+            background: var(--captain-green, #00ffc3);
+            border: 1px solid var(--captain-green, #00ffc3);
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: all 0.3s ease;
+        }
+        .upload-btn:hover {
+            background: transparent;
+            color: var(--captain-green, #00ffc3);
+            box-shadow: 0 0 20px rgba(0, 255, 195, 0.15);
+        }
+        .upload-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: var(--graphite);
+            color: var(--smoke);
+            border-color: var(--glass-border);
+        }
+        .upload-btn--next {
+            background: transparent !important;
+            color: var(--hot-pink, #ff2d78) !important;
+            border-color: var(--hot-pink, #ff2d78) !important;
+            animation: nudgePulse 1.6s ease-in-out infinite;
+        }
+        .upload-btn--next:hover {
+            background: rgba(255, 45, 120, 0.1) !important;
+            box-shadow: 0 0 20px rgba(255, 45, 120, 0.15);
+        }
+        .result-box {
+            margin-top: 28px;
+            padding: 20px;
+            background: linear-gradient(160deg, rgba(0,255,195,0.03), rgba(255,255,255,0.02));
+            border: 1px solid var(--glass-border);
+            border-radius: 6px;
+            display: none;
+        }
+        .result-box.show {
+            display: block;
+            border-color: rgba(0, 255, 195, 0.3);
+            box-shadow: 0 0 16px rgba(0, 255, 195, 0.06);
+        }
+        .result-box h3 {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--captain-green);
+            letter-spacing: 0.1em;
+            margin-bottom: 12px;
+        }
+        .result-box .hash {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--ghost);
+            word-break: break-all;
+            margin-bottom: 10px;
+        }
+        .result-box .url {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--mist);
+            word-break: break-all;
+            margin-bottom: 14px;
+        }
+        .copy-btn {
+            padding: 6px 14px;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--mist);
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .copy-btn:hover {
+            color: var(--captain-green);
+            border-color: var(--captain-green);
+        }
+        .register-via-engram-btn {
+            padding: 12px 20px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--void, #0a0a0f);
+            background: var(--captain-green, #00ffc3);
+            border: 1px solid var(--captain-green, #00ffc3);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .register-via-engram-btn:hover {
+            background: transparent;
+            color: var(--captain-green, #00ffc3);
+            box-shadow: 0 0 16px rgba(0, 255, 195, 0.15);
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 28px;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--smoke);
+            letter-spacing: 0.05em;
+            transition: color 0.2s;
+        }
+        .back-link:hover {
+            color: var(--captain-green);
+        }
+        .error-box {
+            margin-top: 16px;
+            padding: 14px 16px;
+            background: rgba(255, 45, 120, 0.06);
+            border: 1px solid rgba(255, 45, 120, 0.25);
+            border-radius: 4px;
+            color: var(--hot-pink);
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            line-height: 1.5;
+            display: none;
+        }
+        .error-box.show {
+            display: block;
+        }
+        .flow-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--glass-border);
+        }
+        .flow-section h4 {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--captain-green, #00ffc3);
+            margin-bottom: 20px;
+        }
+        .flow-step {
+            margin-bottom: 20px;
+        }
+        .flow-step:last-child { margin-bottom: 0; }
+        .flow-step-title {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--captain-green);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .flow-step-title .step-num {
+            width: 20px;
+            height: 20px;
+            background: var(--captain-green);
+            color: var(--void);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 700;
+        }
+        .flow-step-desc {
+            font-size: 0.8rem;
+            color: var(--smoke);
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        .flow-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .flow-inputs input {
+            padding: 10px 12px;
+            background: var(--obsidian);
+            border: 1px solid var(--glass-border);
+            border-radius: 4px;
+            color: var(--ghost);
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+        }
+        .flow-snippet {
+            padding: 10px 12px;
+            background: var(--obsidian);
+            border: 1px solid var(--glass-border);
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--mist);
+            word-break: break-all;
+            margin-bottom: 8px;
+        }
+        .flow-snippet code {
+            color: var(--captain-green);
+        }
+        .flow-step-desc a {
+            color: var(--hot-pink);
+        }
+        .flow-copy-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .result-success-line {
+            font-family: var(--font-heading);
+            font-size: 1rem;
+            color: var(--captain-green, #00ffc3);
+            margin: 0 0 16px 0;
+        }
+        .result-register-block {
+            margin-bottom: 20px;
+        }
+        .result-register-desc {
+            font-size: 0.85rem;
+            color: var(--smoke);
+            line-height: 1.6;
+            margin: 0 0 14px 0;
+        }
+        .result-cta-btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 0.85rem;
+        }
+        .result-details {
+            font-size: 0.85rem;
+            color: var(--smoke);
+            border: 1px solid var(--glass-border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .result-details summary {
+            padding: 10px 14px;
+            cursor: pointer;
+            color: var(--mist);
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            list-style: none;
+            transition: color 0.2s;
+        }
+        .result-details summary:hover { color: var(--captain-green); }
+        .result-details summary::-webkit-details-marker { display: none; }
+        .result-details summary::before { content: '▸ '; }
+        .result-details[open] summary::before { content: '▾ '; }
+        .result-details-inner {
+            padding: 0 16px 16px 16px;
+            border-top: 1px solid var(--glass-border);
+        }
+        .result-details-inner .hash,
+        .result-details-inner .url {
+            margin-bottom: 8px;
+        }
+
+        /* Register modal */
+        .register-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 100000;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .register-modal-overlay.show {
+            display: flex;
+        }
+        .register-modal {
+            background: var(--obsidian);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            max-width: 420px;
+            width: 100%;
+            padding: 32px;
+        }
+        .register-modal h3 {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            color: var(--ghost);
+            margin-bottom: 12px;
+        }
+        .register-modal p {
+            font-size: 0.9rem;
+            color: var(--smoke);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .register-modal .register-modal-success {
+            color: var(--captain-green);
+            margin-bottom: 16px;
+        }
+        .register-modal .register-modal-success a {
+            color: var(--hot-pink);
+        }
+        .register-modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .register-modal-actions button {
+            width: 100%;
+            padding: 14px 20px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .register-modal-connect {
+            color: var(--void, #0a0a0f);
+            background: var(--captain-green, #00ffc3);
+            border: 1px solid var(--captain-green, #00ffc3);
+            border-radius: 4px;
+        }
+        .register-modal-connect:hover {
+            background: transparent;
+            color: var(--captain-green, #00ffc3);
+        }
+        .register-modal-register {
+            color: var(--void, #0a0a0f);
+            background: var(--captain-green, #00ffc3);
+            border: 1px solid var(--captain-green, #00ffc3);
+            border-radius: 4px;
+        }
+        .register-modal-register:hover {
+            background: transparent;
+            color: var(--captain-green, #00ffc3);
+        }
+        .register-modal-close {
+            color: var(--smoke);
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            border-radius: 4px;
+        }
+        .register-modal-close:hover {
+            color: var(--ghost);
+            border-color: var(--ash);
+        }
+
+        /* Upload page directions */
+        .upload-guide {
+            max-width: 100%;
+        }
+        .upload-guide-inner {
+            font-family: var(--font-body);
+            color: var(--ghost);
+        }
+        .upload-guide-title {
+            font-family: var(--font-heading);
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--ghost);
+            margin-bottom: 8px;
+        }
+        .upload-guide-lead {
+            font-size: 1.05rem;
+            color: var(--mist);
+            margin-bottom: 8px;
+        }
+        .upload-guide-inner > p {
+            font-size: 0.88rem;
+            font-weight: 300;
+            color: var(--smoke);
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+        .upload-guide-h2 {
+            font-family: var(--font-heading);
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: var(--ghost);
+            margin: 0 0 8px;
+        }
+        .upload-guide-list {
+            font-size: 0.85rem;
+            font-weight: 300;
+            color: var(--smoke);
+            line-height: 1.8;
+            margin: 4px 0 0 1.1rem;
+            padding: 0;
+        }
+        .upload-guide-hr {
+            border: none;
+            border-top: 1px solid var(--glass-border);
+            margin: 24px 0;
+        }
+
+        /* Step cards */
+        .guide-step-card {
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04));
+            border: 1px solid var(--glass-border);
+            border-radius: 6px;
+        }
+        .guide-step-number {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--void, #0a0a0f);
+            background: var(--captain-green, #00ffc3);
+            border-radius: 4px;
+        }
+        .guide-step-body {
+            flex: 1;
+            min-width: 0;
+        }
+        .guide-step-body p {
+            font-size: 0.85rem;
+            font-weight: 300;
+            color: var(--smoke);
+            line-height: 1.65;
+            margin-bottom: 8px;
+        }
+        .guide-step-body p:last-child { margin-bottom: 0; }
+        .guide-emphasis {
+            font-style: italic;
+            color: var(--mist) !important;
+        }
+
+        /* Requirements grid */
+        .guide-requirements {
+            margin-bottom: 0;
+        }
+        .guide-req-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .guide-req-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: var(--smoke);
+        }
+        .guide-req-item small {
+            color: var(--ash);
+            font-size: 0.7rem;
+        }
+        .guide-req-icon {
+            font-size: 1.1rem;
+            color: var(--captain-green, #00ffc3);
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .guide-footer {
+            font-size: 0.82rem !important;
+            font-style: italic;
+            color: var(--ash) !important;
+            text-align: center;
+            line-height: 1.7;
+        }
+
+        /* Form section dividers */
+        .form-group-divider {
+            position: relative;
+            text-align: center;
+            margin: 28px 0 20px;
+            border-top: 1px solid var(--glass-border);
+        }
+        .divider-label {
+            position: relative;
+            top: -0.7em;
+            display: inline-block;
+            padding: 0 12px;
+            background: var(--obsidian);
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--mist);
+        }
+
+        /* Two-column layout: instructions left, form right */
+        .upload-page-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            max-width: 1100px;
+            margin: 48px auto 56px;
+            padding: 0 24px;
+            align-items: start;
+        }
+        @media (max-width: 900px) {
+            .upload-page-layout {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+            .guide-req-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .jwt-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .jwt-input-wrap input {
+            flex: 1;
+            padding-right: 44px;
+        }
+        .jwt-toggle {
+            position: absolute;
+            right: 8px;
+            background: none;
+            border: none;
+            color: var(--ash);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+        .jwt-toggle:hover { color: var(--mist); }
+
+        .engram-nudge {
+            display: inline-block;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--hot-pink, #ff2d78);
+            animation: nudgePulse 1.4s ease-in-out infinite;
+        }
+        @keyframes nudgePulse {
+            0%, 100% { opacity: 1; text-shadow: 0 0 6px rgba(255, 45, 120, 0.4); }
+            50%      { opacity: 0.6; text-shadow: 0 0 16px rgba(255, 45, 120, 0.7); }
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-page-layout">
+    <div class="upload-guide">
+        <div class="upload-guide-inner">
+            <h1 class="upload-guide-title">Publish Your Track</h1>
+            <p class="upload-guide-lead">DeroBeats exists for original sound.</p>
+            <p>AI-generated. Human-made. Technically produced.<br>If it&rsquo;s yours &mdash; and it lives nowhere else &mdash; it belongs here.</p>
+
+            <div class="guide-step-card">
+                <div class="guide-step-number">1</div>
+                <div class="guide-step-body">
+                    <h2 class="upload-guide-h2">Pin to IPFS</h2>
+                    <p>Upload your MP3 and optional artwork through the form. We support <strong>Pinata</strong> out of the box &mdash; just paste your JWT.</p>
+                    <p>Run your own IPFS node? Use any provider you like. Just paste the CID directly and skip the upload entirely.</p>
+                    <p class="guide-emphasis">No servers. No custody. No middle layer.</p>
+                </div>
+            </div>
+
+            <div class="guide-step-card">
+                <div class="guide-step-number">2</div>
+                <div class="guide-step-body">
+                    <h2 class="upload-guide-h2">Register On-Chain</h2>
+                    <p>After pinning, click <strong>Register on chain</strong>. Engram will prompt you to approve a smart contract transaction.</p>
+                    <p>Once confirmed, wait ~20 seconds and refresh DeroBeats. Your track is now:</p>
+                    <ul class="upload-guide-list">
+                        <li>Indexed by Gnomon</li>
+                        <li>Playable &amp; streamable</li>
+                        <li>Mineable by listeners</li>
+                        <li>Upvotable on-chain</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step-card">
+                <div class="guide-step-number">3</div>
+                <div class="guide-step-body">
+                    <h2 class="upload-guide-h2">Earn Hash Power</h2>
+                    <p>Listeners mine directly to the wallet that registered the track. No platform cuts. No splits. Just hash power flowing to artists.</p>
+                </div>
+            </div>
+
+            <hr class="upload-guide-hr">
+
+            <div class="guide-requirements">
+                <h2 class="upload-guide-h2">What You&rsquo;ll Need</h2>
+                <div class="guide-req-grid">
+                    <div class="guide-req-item">
+                        <span class="guide-req-icon">&#926;</span>
+                        <span>Engram wallet</span>
+                    </div>
+                    <div class="guide-req-item">
+                        <span class="guide-req-icon">&#8962;</span>
+                        <span>IPFS provider <small>(or your own node)</small></span>
+                    </div>
+                    <div class="guide-req-item">
+                        <span class="guide-req-icon">&#9835;</span>
+                        <span>Your MP3 track</span>
+                    </div>
+                    <div class="guide-req-item">
+                        <span class="guide-req-icon">&#9634;</span>
+                        <span>Artwork <small>(optional)</small></span>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="upload-guide-hr">
+
+            <p class="guide-footer">Original sound. Exclusive publication. Shared standard.<br>DeroBeats grows stronger when tracks live here first.</p>
+        </div>
+    </div>
+
+    <div class="upload-container">
+        <h1>Upload to IPFS</h1>
+        <p class="subtitle">Pin your track &bull; Any IPFS provider &bull; Register on-chain</p>
+
+        <form class="upload-form" id="uploadForm" autocomplete="off">
+            <div class="form-group">
+                <label>Song title</label>
+                <input type="text" id="songTitle" placeholder="e.g. My Track" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>Artist name</label>
+                <input type="text" id="songArtist" placeholder="e.g. Your name or alias" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>Genre (optional)</label>
+                <select id="genreSelect" class="genre-select">
+                    <option value="">Select genre</option>
+                    <option value="Hip Hop">Hip Hop</option>
+                    <option value="Trap">Trap</option>
+                    <option value="Grime">Grime</option>
+                    <option value="R&B">R&B</option>
+                    <option value="Pop">Pop</option>
+                    <option value="Alternative">Alternative</option>
+                    <option value="Rock">Rock</option>
+                    <option value="Jazz">Jazz</option>
+                    <option value="Lo-Fi">Lo-Fi</option>
+                    <option value="Ambient">Ambient</option>
+                    <option value="Classical">Classical</option>
+                    <option value="Electronic">Electronic</option>
+                    <option value="House">House</option>
+                    <option value="Techno">Techno</option>
+                    <option value="Drum & Bass">Drum & Bass</option>
+                    <option value="Dubstep">Dubstep</option>
+                    <option value="Downtempo">Downtempo</option>
+                    <option value="Hyperpop">Hyperpop</option>
+                    <option value="Glitchcore">Glitchcore</option>
+                    <option value="Cloud Rap">Cloud Rap</option>
+                    <option value="Emo Trap">Cyber Noir</option>
+                    <option value="Sacred Bass">Sacred Bass</option>
+                    <option value="Psybass">Psybass</option>
+                    <option value="World Fusion">World Fusion</option>
+                    <option value="Industrial">Industrial</option>
+                    <option value="Darkwave">Darkwave</option>
+                    <option value="Meshwave">Meshwave</option>
+                    <option value="On-Chain Experimental">On-Chain Experimental</option>
+                </select>
+            </div>
+
+            <div class="form-group-divider">
+                <span class="divider-label">Upload via Pinata</span>
+            </div>
+
+            <div class="form-group">
+                <label>Song file</label>
+                <input type="file" id="fileInput" accept=".mp3,.wav,.m4a">
+                <p class="hint">MP3 recommended. Max ~100MB on Pinata free tier.</p>
+            </div>
+
+            <div class="form-group">
+                <label>Artwork file (optional)</label>
+                <input type="file" id="artworkInput" accept=".jpg,.jpeg,.png,.webp">
+                <p class="hint">500x500 px square recommended. JPG/PNG/WebP, max 2MB.</p>
+            </div>
+
+            <div class="form-group">
+                <label>Pinata JWT</label>
+                <div class="jwt-input-wrap">
+                    <input type="password" id="jwtInput" placeholder="eyJhbGc..." autocomplete="new-password" data-1p-ignore data-lpignore="true" data-form-type="other" spellcheck="false">
+                    <button type="button" class="jwt-toggle" id="jwtToggle" title="Show/hide JWT">&#9673;</button>
+                </div>
+                <p class="hint">
+                    <a href="https://app.pinata.cloud" target="_blank">app.pinata.cloud</a> &rarr;
+                    API Keys &rarr; New Key &rarr; <strong>Admin</strong>. We never store it.
+                </p>
+            </div>
+
+            <div class="form-group-divider">
+                <span class="divider-label">Or paste CIDs directly</span>
+            </div>
+
+            <div class="form-group">
+                <label>MP3 IPFS CID</label>
+                <input type="text" id="mp3CidInput" placeholder="e.g. bafybei..." autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" spellcheck="false">
+                <p class="hint">Already pinned your track elsewhere? Paste the CID &mdash; skips Pinata entirely.</p>
+            </div>
+
+            <div class="form-group">
+                <label>Artwork IPFS CID (optional)</label>
+                <input type="text" id="artworkCidInput" placeholder="e.g. bafybeicy5dta..." autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" spellcheck="false">
+                <p class="hint">If empty, default DeroBeats artwork is auto-assigned.</p>
+            </div>
+
+            <button type="submit" class="upload-btn" id="uploadBtn">Publish Track</button>
+            <p class="hint" style="margin-top:8px; text-align:center; color:var(--ash);">If upload hangs: disable CORS blockers or site-blocking extensions.</p>
+        </form>
+
+        <div class="error-box" id="errorBox"></div>
+
+        <div class="result-box" id="resultBox">
+            <p class="result-success-line" id="resultSuccessLine">✓ Track ready</p>
+
+            <div class="result-register-block">
+                <p class="result-register-desc">Register your track on the DeroBeats registry so it appears in Featured Tracks. Connect your wallet in the modal, press <strong>Register via Engram</strong>, then <strong>Approve</strong> in Engram. Refresh DeroBeats to see your track.</p>
+                <button type="button" class="register-via-engram-btn result-cta-btn" id="registerViaEngramBtn">Register on chain →</button>
+            </div>
+
+            <details class="result-details" id="resultDetails">
+                <summary>Technical details (IPFS, Song ID, copy)</summary>
+                <div class="result-details-inner">
+                    <p class="hash"><strong>Song IPFS:</strong> <span id="ipfsHash"></span></p>
+                    <p class="url"><strong>Gateway URL:</strong> <span id="gatewayUrl"></span></p>
+                    <div id="artworkResult" style="display:none; margin-top:8px;">
+                        <p class="hash"><strong>Artwork IPFS:</strong> <span id="artworkHash"></span></p>
+                        <p class="url"><strong>Artwork URL:</strong> <span id="artworkUrl"></span></p>
+                        <button class="copy-btn" id="copyArtworkUrlBtn">Copy artwork URL</button>
+                    </div>
+                    <p class="hash" style="margin-top:8px;"><strong>Song ID:</strong> <span id="songId" style="font-family:monospace;font-size:0.85em;"></span></p>
+                    <div class="flow-copy-row">
+                        <button class="copy-btn" id="copyUrlBtn">Copy URL</button>
+                        <button class="copy-btn" id="copySongIdBtn">Copy Song ID</button>
+                    </div>
+                    <div class="flow-step" style="margin-top:16px;">
+                        <div class="flow-step-title">Song card snippet</div>
+                        <div class="flow-snippet" id="songScidSnippet"></div>
+                        <div class="flow-copy-row">
+                            <button class="copy-btn" id="copyScidSnippetBtn">Copy snippet</button>
+                            <button class="copy-btn" id="copySongCardBtn">Copy full song card HTML</button>
+                        </div>
+                    </div>
+                </div>
+            </details>
+        </div>
+
+        <a href="index.html?from=upload" class="back-link" id="backToDeroBeatsLink">← Back to DeroBeats</a>
+    </div>
+    </div><!-- .upload-page-layout -->
+
+    <!-- Register modal (connect + scinvoke on this page, no redirect) -->
+    <div class="register-modal-overlay" id="registerModalOverlay">
+        <div class="register-modal">
+            <h3 id="registerModalTitle">Register on Dero</h3>
+            <p id="registerModalDesc">Connect your wallet to register your track on the DeroBeats registry. Engram will prompt you to approve the transaction.</p>
+            <div class="register-modal-actions" id="registerModalActions">
+                <button type="button" class="register-modal-connect" id="registerModalConnectBtn">Connect wallet</button>
+                <button type="button" class="register-modal-close" id="registerModalCloseBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // When in iframe, "Back to DeroBeats" closes the parent modal instead of navigating
+        (function() {
+            const backLink = document.getElementById('backToDeroBeatsLink');
+            if (backLink && window !== window.parent) {
+                backLink.href = '#';
+                backLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.parent.postMessage({ type: 'derobeats_close_upload' }, '*');
+                });
+            }
+        })();
+
+        const form = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const jwtInput = document.getElementById('jwtInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const resultBox = document.getElementById('resultBox');
+        const errorBox = document.getElementById('errorBox');
+        const ipfsHashEl = document.getElementById('ipfsHash');
+
+        // JWT show/hide toggle
+        const jwtToggle = document.getElementById('jwtToggle');
+        if (jwtToggle && jwtInput) {
+            jwtToggle.addEventListener('click', () => {
+                const isHidden = jwtInput.type === 'password';
+                jwtInput.type = isHidden ? 'text' : 'password';
+                jwtToggle.textContent = isHidden ? '\u25C9' : '\u25CE';
+            });
+        }
+        const gatewayUrlEl = document.getElementById('gatewayUrl');
+        const copyUrlBtn = document.getElementById('copyUrlBtn');
+
+        // Register modal + XSWD (stay on upload page, no redirect)
+        const REGISTRY_SCID = "88aa9c31ca557eb87fe0ff4c1f077fd5a41c0613f63090c58f82d0452929929c";
+        let registerSocket = null;
+        let registerConnected = false;
+        let registerWalletAddress = "";
+        let pendingRegister = null; // { songId, hash, title, artist, genre }
+        let _pendingTransferScRpc = null;
+
+        const appData = { id: "712844040aa87fc8e2ba24f38dbd6452e5856f9910715ddebca9ca529f21ea08", name: "DeroBeats Upload", description: "Register tracks to DeroBeats", url: location.origin + location.pathname };
+
+        function openRegisterModal(data) {
+            pendingRegister = data;
+            registerConnected = false;
+            if (registerSocket) { registerSocket.close(); registerSocket = null; }
+            document.getElementById('registerModalTitle').textContent = 'Register on Dero';
+            document.getElementById('registerModalDesc').textContent = 'Connect your wallet to register your track on the DeroBeats registry. Engram will prompt you to approve the transaction.';
+            const actions = document.getElementById('registerModalActions');
+            actions.innerHTML = '<button type="button" class="register-modal-connect" id="registerModalConnectBtn">Connect wallet</button><button type="button" class="register-modal-close" id="registerModalCloseBtn">Cancel</button>';
+            document.getElementById('registerModalOverlay').classList.add('show');
+            document.getElementById('registerModalConnectBtn').onclick = connectForRegister;
+            document.getElementById('registerModalCloseBtn').onclick = closeRegisterModal;
+        }
+        function closeRegisterModal() {
+            document.getElementById('registerModalOverlay').classList.remove('show');
+            if (registerSocket) { registerSocket.close(); registerSocket = null; }
+            registerConnected = false;
+            pendingRegister = null;
+        }
+        function connectForRegister() {
+            const btn = document.getElementById('registerModalConnectBtn');
+            if (!btn) return;
+            btn.disabled = true;
+            btn.textContent = 'Connecting...';
+            registerSocket = new WebSocket("ws://localhost:44326/xswd");
+            registerSocket.onopen = () => registerSocket.send(JSON.stringify(appData));
+            registerSocket.onmessage = (e) => {
+                const r = JSON.parse(e.data);
+                const _rid = typeof r.id === 'string' ? r.id.replace(/^"|"$/g, '') : String(r.id || '');
+                console.log("📥 [register ws] id:", _rid, JSON.stringify(r).slice(0, 500));
+                
+                if (r.accepted) {
+                    registerConnected = true;
+                    btn.textContent = 'Connected';
+                    registerSocket.send(JSON.stringify({ jsonrpc: "2.0", id: "get_addr", method: "GetAddress" }));
+                    showRegisterButton();
+                }
+                if (_rid === "get_addr" && r.result?.address) {
+                    registerWalletAddress = r.result.address;
+                    console.log("🔑 Upload wallet address:", registerWalletAddress);
+                    return;
+                }
+                if (_rid === "gas_est") {
+                    let fees = 5000;
+                    if (r.result && r.result.gasstorage > 0) {
+                        fees = Math.max(Math.ceil(r.result.gasstorage * 2), 2000);
+                        console.log("⛽ GasEstimate OK — compute:", r.result.gascompute, "storage:", r.result.gasstorage, "→ fees:", fees);
+                    } else {
+                        console.warn("⛽ GasEstimate failed, using fallback fees:", fees, r.error ? JSON.stringify(r.error) : "");
+                    }
+                    if (_pendingTransferScRpc && registerSocket && registerSocket.readyState === 1) {
+                        const transferReq = { jsonrpc: "2.0", id: Date.now().toString(), method: "transfer", params: { scid: REGISTRY_SCID, sc_id: REGISTRY_SCID, ringsize: 2, fees: fees, sc_rpc: _pendingTransferScRpc }};
+                        const transferJson = JSON.stringify(transferReq);
+                        console.log("📤 Sending transfer:", transferJson.length, "bytes, fees:", fees);
+                        console.log("📤 Full JSON:", transferJson);
+                        registerSocket.send(transferJson);
+                        _pendingTransferScRpc = null;
+                        document.getElementById('registerModalDesc').innerHTML = '<span class="engram-nudge">⚡ Switch to Engram now — it needs your approval</span><br><small>If Engram didn\'t pop up, open it manually. After approving, wait ~20s and Refresh DeroBeats.</small>';
+                    }
+                    return;
+                }
+                if (_rid === "verify_sc" && r.result?.stringkeys) {
+                    const ts = r.result.stringkeys.total_songs;
+                    console.log("🔍 Post-TX verify: total_songs =", ts);
+                    return;
+                }
+                if (r.result?.txid) {
+                    console.log("✅ TX submitted:", r.result.txid);
+                    showRegisterSuccess(r.result.txid);
+                    setTimeout(() => {
+                        if (registerSocket && registerSocket.readyState === 1) {
+                            console.log("🔍 Verifying contract state...");
+                            registerSocket.send(JSON.stringify({ jsonrpc: "2.0", id: "verify_sc", method: "DERO.GetSC", params: { scid: REGISTRY_SCID, variables: true, code: false }}));
+                        }
+                    }, 20000);
+                }
+                if (r.error) {
+                    const errMsg = typeof r.error === 'string' ? r.error : (r.error?.message || JSON.stringify(r.error));
+                    console.error("❌ Register error:", errMsg, "full:", JSON.stringify(r.error));
+                    if (!registerConnected) {
+                        btn.disabled = false;
+                        btn.textContent = 'Connect wallet';
+                        document.getElementById('registerModalDesc').textContent = 'Connection failed: ' + errMsg + '. Is Engram running?';
+                    } else {
+                        document.getElementById('registerModalDesc').textContent = 'Registration error: ' + errMsg + '. Check Engram, then try again.';
+                        const regBtn = document.getElementById('registerModalRegisterBtn');
+                        if (regBtn) { regBtn.disabled = false; regBtn.textContent = 'Register via Engram'; }
+                    }
+                }
+            };
+            registerSocket.onerror = () => { btn.disabled = false; btn.textContent = 'Connect wallet'; };
+            registerSocket.onclose = () => { if (!registerConnected) { btn.disabled = false; btn.textContent = 'Connect wallet'; } };
+        }
+        function showRegisterButton() {
+            const actions = document.getElementById('registerModalActions');
+            actions.innerHTML = '<button type="button" class="register-modal-register" id="registerModalRegisterBtn">Register via Engram</button><button type="button" class="register-modal-close" id="registerModalCloseBtn">Cancel</button>';
+            document.getElementById('registerModalRegisterBtn').onclick = doRegister;
+            document.getElementById('registerModalCloseBtn').onclick = closeRegisterModal;
+        }
+        function normalizeSongId(raw) {
+            if (!raw || typeof raw !== "string") return { ok: false, error: "Song ID is empty" };
+            const s = String(raw).trim().toLowerCase();
+            if (s.length !== 64) return { ok: false, error: "Song ID must be 64 hex chars (got " + s.length + ")" };
+            if (!/^[0-9a-f]{64}$/.test(s)) return { ok: false, error: "Song ID must be hex only" };
+            return { ok: true, value: s };
+        }
+        function doRegister() {
+            if (!pendingRegister || !registerSocket || registerSocket.readyState !== 1) {
+                document.getElementById('registerModalDesc').textContent = 'Wallet not connected. Close and try again.';
+                return;
+            }
+            const { songId, hash, title, artist, genre, contentHash, fileSize, mimeType, duration, previewArtCid } = pendingRegister || {};
+            if (!songId || !hash) {
+                document.getElementById('registerModalDesc').textContent = 'Missing song data. Re-upload and try again.';
+                return;
+            }
+            const norm = normalizeSongId(songId);
+            if (!norm.ok) {
+                document.getElementById('registerModalDesc').textContent = norm.error;
+                return;
+            }
+            const t = String(title || "").trim();
+            const a = String(artist || "").trim();
+            const g = String(genre || "").trim();
+            const h = String(hash || "").trim();
+            if (!t || !a || !h) {
+                document.getElementById('registerModalDesc').textContent = 'Title, artist, and IPFS hash are required.';
+                return;
+            }
+            const regBtn = document.getElementById('registerModalRegisterBtn');
+            if (regBtn) { regBtn.disabled = true; regBtn.textContent = 'Sending...'; }
+
+            const previewArtCidVal = String(previewArtCid || "").trim();
+            const scRpc = [
+                { name: "entrypoint", datatype: "S", value: "RegisterSong" },
+                { name: "songSCID", datatype: "S", value: norm.value },
+                { name: "title", datatype: "S", value: t },
+                { name: "artist", datatype: "S", value: a },
+                { name: "genre", datatype: "S", value: g },
+                { name: "ipfsHash", datatype: "S", value: h },
+                { name: "previewArtCid", datatype: "S", value: previewArtCidVal }
+            ];
+
+            _pendingTransferScRpc = scRpc;
+
+            const gasRpc = [
+                ...scRpc,
+                { name: "SC_ACTION", datatype: "U", value: 0 },
+                { name: "SC_ID", datatype: "H", value: REGISTRY_SCID }
+            ];
+            const gasParams = { sc_rpc: gasRpc, ringsize: 2 };
+            if (registerWalletAddress) gasParams.signer = registerWalletAddress;
+            const gasReq = { jsonrpc: "2.0", id: "gas_est", method: "DERO.GetGasEstimate", params: gasParams };
+            console.log("⛽ Requesting gas estimate (signer:", registerWalletAddress ? "yes" : "none", ")...", JSON.stringify(gasReq).slice(0, 400));
+            registerSocket.send(JSON.stringify(gasReq));
+            document.getElementById('registerModalDesc').textContent = 'Estimating gas... please wait.';
+        }
+        function showRegisterSuccess(txid) {
+            document.getElementById('registerModalTitle').textContent = '✓ Registered';
+            let descHtml = 'Your track is on chain. <a href="index.html?from=upload">Go to DeroBeats</a> and hit Refresh to see it in Featured Tracks.';
+            if (txid) {
+                const explorerUrl = 'https://explorer.derofoundation.org/tx/' + txid;
+                descHtml += '<div style="margin-top:12px;padding:10px;background:var(--graphite);border:1px solid var(--glass-border);font-family:var(--font-mono);font-size:0.75rem;"><strong>Transaction ID:</strong> <code style="word-break:break-all;">' + txid + '</code><br><a href="' + explorerUrl + '" target="_blank" rel="noopener" style="color:var(--hot-pink);margin-top:6px;display:inline-block;">View on explorer →</a></div>';
+            }
+            if (pendingRegister?.songId) {
+                descHtml += '<div style="margin-top:8px;font-family:var(--font-mono);font-size:0.75rem;"><strong>Song ID:</strong> <code style="word-break:break-all;">' + pendingRegister.songId + '</code></div>';
+            }
+            document.getElementById('registerModalDesc').innerHTML = descHtml;
+            document.getElementById('registerModalActions').innerHTML = '<button type="button" class="register-modal-close" id="registerModalCloseBtn">Close</button>';
+            document.getElementById('registerModalCloseBtn').onclick = closeRegisterModal;
+        }
+        document.getElementById('registerModalOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeRegisterModal(); });
+
+        // Pre-fill title from filename when user selects a file
+        fileInput.addEventListener('change', function() {
+            const titleInput = document.getElementById('songTitle');
+            const file = this.files[0];
+            if (titleInput && file && !titleInput.value.trim()) {
+                titleInput.value = file.name.replace(/\.[^.]+$/, '');
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const file = fileInput.files[0];
+            const jwt = jwtInput.value.trim();
+            const mp3Cid = (document.getElementById('mp3CidInput')?.value || '').trim();
+
+            const hasDirectCid = mp3Cid.length > 10;
+
+            if (!hasDirectCid && (!file || !jwt)) {
+                showError('Either select a file + enter your Pinata JWT, or paste an MP3 CID directly.');
+                return;
+            }
+
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = hasDirectCid ? 'Processing...' : 'Uploading...';
+            resultBox.classList.remove('show');
+            errorBox.classList.remove('show');
+
+            let hash, response, data;
+
+            if (hasDirectCid) {
+                hash = mp3Cid;
+            }
+
+            try {
+
+            if (!hash) {
+                const v3Form = new FormData();
+                v3Form.append('file', file);
+                v3Form.append('network', 'public');
+                const TIMEOUT_MS = 120000;
+
+                const v3Controller = new AbortController();
+                const v3Timeout = setTimeout(() => v3Controller.abort(), TIMEOUT_MS);
+                try {
+                    response = await fetch('https://uploads.pinata.cloud/v3/files', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${jwt}` },
+                        body: v3Form,
+                        signal: v3Controller.signal
+                    });
+                } catch (fetchErr) {
+                    clearTimeout(v3Timeout);
+                    if (fetchErr.name === 'AbortError') {
+                        uploadBtn.textContent = 'Trying legacy endpoint...';
+                        try {
+                            const legacyForm = new FormData();
+                            legacyForm.append('file', file);
+                            const legController = new AbortController();
+                            const legTimeout = setTimeout(() => legController.abort(), TIMEOUT_MS);
+                            response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${jwt}` },
+                                body: legacyForm,
+                                signal: legController.signal
+                            });
+                            clearTimeout(legTimeout);
+                            data = await response.json().catch(() => ({}));
+                            if (response.ok) hash = data.IpfsHash;
+                        } catch (legErr) {
+                            if (legErr.name === 'AbortError') throw new Error('Upload timed out. Try a smaller file or check your connection.');
+                            throw legErr;
+                        }
+                        if (!hash) throw new Error('Legacy upload failed. Try a smaller file or check your JWT.');
+                    } else {
+                        throw fetchErr;
+                    }
+                }
+                clearTimeout(v3Timeout);
+
+                if (hash === undefined) {
+                    try { data = await response.json(); }
+                    catch (_) { throw new Error(`Pinata returned invalid response (${response.status}). Check your JWT.`); }
+
+                    if (response.ok) hash = data?.data?.cid || data?.cid;
+
+                    if (!hash && response.status === 403) {
+                        const legacyForm = new FormData();
+                        legacyForm.append('file', file);
+                        const legController = new AbortController();
+                        const legTimeout = setTimeout(() => legController.abort(), TIMEOUT_MS);
+                        try {
+                            response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${jwt}` },
+                                body: legacyForm,
+                                signal: legController.signal
+                            });
+                        } catch (legErr) {
+                            clearTimeout(legTimeout);
+                            if (legErr.name === 'AbortError') throw new Error('Upload timed out. Try a smaller file or check your connection.');
+                            throw legErr;
+                        }
+                        clearTimeout(legTimeout);
+                        data = await response.json().catch(() => ({}));
+                        if (response.ok) hash = data.IpfsHash;
+                    }
+                }
+
+                if (!response.ok) {
+                    const errMsg = extractPinataError(data) || `Upload failed (${response.status}). Try creating an Admin key in Pinata.`;
+                    throw new Error(errMsg);
+                }
+                if (!hash) throw new Error('Upload succeeded but no hash returned.');
+            }
+
+                const gatewayUrl = `https://gateway.pinata.cloud/ipfs/${hash}`;
+
+                let contentHash = '';
+                let durationSec = 0;
+                let fileSize = 0;
+                let mimeType = 'audio/mpeg';
+
+                if (file) {
+                    try {
+                        const buf = await file.arrayBuffer();
+                        const digest = await crypto.subtle.digest('SHA-256', buf);
+                        contentHash = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('').toLowerCase();
+                    } catch (_) {}
+                    try {
+                        const objUrl = URL.createObjectURL(file);
+                        const audio = new Audio(objUrl);
+                        await new Promise((resolve) => {
+                            audio.onloadedmetadata = () => {
+                                durationSec = Math.round(audio.duration || 0);
+                                URL.revokeObjectURL(objUrl);
+                                resolve();
+                            };
+                            audio.onerror = () => { URL.revokeObjectURL(objUrl); resolve(); };
+                        });
+                    } catch (_) {}
+                    fileSize = file.size || 0;
+                    mimeType = file.type || 'audio/mpeg';
+                }
+
+                // Optional: artwork — use existing CID, or upload new file
+                let artworkHash = null;
+                let artworkUrl = null;
+                const artworkCid = document.getElementById('artworkCidInput')?.value?.trim();
+                const artworkFile = document.getElementById('artworkInput')?.files?.[0];
+                if (artworkCid) {
+                    artworkHash = artworkCid;
+                    artworkUrl = `https://gateway.pinata.cloud/ipfs/${artworkHash}`;
+                } else if (artworkFile && jwt) {
+                    uploadBtn.textContent = 'Uploading artwork...';
+                    const awForm = new FormData();
+                    awForm.append('file', artworkFile);
+                    awForm.append('network', 'public');
+                    try {
+                        const awCtrl = new AbortController();
+                        const awT = setTimeout(() => awCtrl.abort(), 60000);
+                        const awRes = await fetch('https://uploads.pinata.cloud/v3/files', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${jwt}` },
+                            body: awForm,
+                            signal: awCtrl.signal
+                        });
+                        clearTimeout(awT);
+                        let awData;
+                        try { awData = await awRes.json(); } catch (_) {}
+                        if (awRes.ok) {
+                            artworkHash = awData?.data?.cid || awData?.cid;
+                            if (artworkHash) artworkUrl = `https://gateway.pinata.cloud/ipfs/${artworkHash}`;
+                        }
+                        if (!artworkHash && awRes.status === 403) {
+                            const legForm = new FormData();
+                            legForm.append('file', artworkFile);
+                            const legRes = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${jwt}` },
+                                body: legForm
+                            });
+                            const legData = await legRes.json().catch(() => ({}));
+                            if (legRes.ok && legData.IpfsHash) {
+                                artworkHash = legData.IpfsHash;
+                                artworkUrl = `https://gateway.pinata.cloud/ipfs/${artworkHash}`;
+                            }
+                        }
+                    } catch (_) { /* artwork upload failed, will use fallback */ }
+                }
+
+                // Generate unique 64-char Song ID for on-chain registration (contract requires exactly 64 hex chars)
+                const songIdPayload = hash + Date.now() + Math.random();
+                const songIdBuf = new TextEncoder().encode(songIdPayload);
+                const songIdDigest = await crypto.subtle.digest('SHA-256', songIdBuf);
+                const songId = Array.from(new Uint8Array(songIdDigest)).map(b => b.toString(16).padStart(2, '0')).join('').toLowerCase();
+
+                const successLine = document.getElementById('resultSuccessLine');
+                if (successLine) successLine.textContent = hasDirectCid ? '✓ CID verified' : '✓ Uploaded to IPFS';
+
+                ipfsHashEl.textContent = hash;
+                gatewayUrlEl.textContent = gatewayUrl;
+                const songIdEl = document.getElementById('songId');
+                if (songIdEl) songIdEl.textContent = songId;
+
+                // Fallback icon index (0-9) from song ID - deterministic, cypherpunk themed
+                const fallbackIconIndex = parseInt(songId.slice(0, 8), 16) % 10;
+                const artworkImgSrc = artworkUrl || `https://gateway.pinata.cloud/ipfs/bafybeic6uqultpgp2r6yadqtnyte2la7zbfqhf2yiwgrfpszwt2hes3spi`;
+
+                const artworkResult = document.getElementById('artworkResult');
+                if (artworkResult) {
+                    if (artworkUrl) {
+                        artworkResult.style.display = 'block';
+                        document.getElementById('artworkHash').textContent = artworkHash;
+                        document.getElementById('artworkUrl').textContent = artworkUrl;
+                        const copyArtworkBtn = document.getElementById('copyArtworkUrlBtn');
+                        if (copyArtworkBtn) copyArtworkBtn.onclick = () => {
+                            navigator.clipboard.writeText(artworkUrl);
+                            copyArtworkBtn.textContent = 'Copied!';
+                            setTimeout(() => copyArtworkBtn.textContent = 'Copy artwork URL', 2000);
+                        };
+                    } else {
+                        artworkResult.style.display = 'block';
+                        artworkResult.innerHTML = '<p class="hint" style="margin:0;">No artwork uploaded — default DeroBeats artwork will be used.</p>';
+                    }
+                }
+                resultBox.classList.add('show');
+
+                uploadBtn.disabled = false;
+                uploadBtn.type = 'button';
+                uploadBtn.textContent = 'Step 2: Register to Blockchain ↓';
+                uploadBtn.classList.add('upload-btn--next');
+                uploadBtn.onclick = (e) => {
+                    e.preventDefault();
+                    resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                };
+                resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                copyUrlBtn.onclick = () => {
+                    navigator.clipboard.writeText(gatewayUrl);
+                    copyUrlBtn.textContent = 'Copied!';
+                    setTimeout(() => copyUrlBtn.textContent = 'Copy URL', 2000);
+                };
+                const copySongIdBtn = document.getElementById('copySongIdBtn');
+                if (copySongIdBtn) copySongIdBtn.onclick = () => {
+                    navigator.clipboard.writeText(songId);
+                    copySongIdBtn.textContent = 'Copied!';
+                    setTimeout(() => copySongIdBtn.textContent = 'Copy Song ID', 2000);
+                };
+
+                // Wire up the on-chain flow (once per upload)
+                const genreSelect = document.getElementById('genreSelect');
+                const songTitle = document.getElementById('songTitle');
+                const songArtist = document.getElementById('songArtist');
+                const songScidSnippet = document.getElementById('songScidSnippet');
+
+                function updateFlow() {
+                    const title = (songTitle?.value || '').trim();
+                    const artist = (songArtist?.value || '').trim();
+                    const genre = genreSelect?.value || '';
+                    if (songScidSnippet) {
+                        songScidSnippet.textContent = `data-song-scid="${songId}"`;
+                    }
+                    return { title, artist, genre };
+                }
+
+                if (genreSelect) genreSelect.addEventListener('change', updateFlow);
+                if (songTitle) songTitle.addEventListener('input', updateFlow);
+                if (songArtist) songArtist.addEventListener('input', updateFlow);
+
+                updateFlow();
+
+                const registerViaEngramBtn = document.getElementById('registerViaEngramBtn');
+                if (registerViaEngramBtn) registerViaEngramBtn.onclick = () => {
+                    const t = (songTitle?.value || '').trim();
+                    const a = (songArtist?.value || '').trim();
+                    const g = genreSelect?.value || '';
+                    if (!t || !a) {
+                        const desc = document.querySelector('.result-register-desc');
+                        if (desc) desc.innerHTML = '<span style="color:var(--hot-pink);">Title and Artist are required. Fill them in above before registering.</span>';
+                        return;
+                    }
+                    const inIframe = (window !== window.parent);
+                    if (inIframe) {
+                        const msg = {
+                            type: 'derobeats_register',
+                            songSCID: songId,
+                            title: t,
+                            artist: a,
+                            genre: g,
+                            ipfsHash: hash,
+                            contentHash: contentHash || '',
+                            fileSize: String(fileSize || 0),
+                            mimeType: mimeType || '',
+                            duration: String(durationSec || 0),
+                            previewArtCid: (artworkHash || '').trim()
+                        };
+                        window.parent.postMessage(msg, '*');
+                        document.getElementById('registerModalOverlay')?.classList.remove('show');
+                        const desc = document.querySelector('.result-register-desc');
+                        if (desc) desc.innerHTML = 'Registration sent to main page. <strong>Approve in Engram</strong>, then refresh DeroBeats to see your track.';
+                        registerViaEngramBtn.textContent = '✓ Sent — approve in Engram';
+                        registerViaEngramBtn.disabled = true;
+                        window.addEventListener('message', function onRegisterResult(ev) {
+                            if (ev.data?.type === 'derobeats_register_done') {
+                                window.removeEventListener('message', onRegisterResult);
+                                let doneHtml = '✓ <strong>Registered!</strong> Refresh DeroBeats to see your track.';
+                                const txid = ev.data?.txid;
+                                if (txid) {
+                                    const explorerUrl = 'https://explorer.derofoundation.org/tx/' + txid;
+                                    doneHtml += '<div style="margin-top:12px;padding:10px;background:var(--graphite);border:1px solid var(--glass-border);font-family:var(--font-mono);font-size:0.75rem;"><strong>Transaction ID:</strong> <code style="word-break:break-all;">' + txid + '</code><br><a href="' + explorerUrl + '" target="_blank" rel="noopener" style="color:var(--hot-pink);margin-top:6px;display:inline-block;">View on explorer →</a></div>';
+                                }
+                                if (songId) {
+                                    doneHtml += '<div style="margin-top:8px;font-family:var(--font-mono);font-size:0.75rem;"><strong>Song ID:</strong> <code style="word-break:break-all;">' + songId + '</code></div>';
+                                }
+                                if (desc) desc.innerHTML = doneHtml;
+                                registerViaEngramBtn.textContent = '✓ Registered';
+                            }
+                            if (ev.data?.type === 'derobeats_register_error') {
+                                window.removeEventListener('message', onRegisterResult);
+                                console.error('[Register] Error from parent:', ev.data.error);
+                                if (desc) desc.innerHTML = '<span style="color:var(--hot-pink);">Error: ' + (ev.data.error || 'Registration failed') + '</span>';
+                                registerViaEngramBtn.textContent = 'Register on chain →';
+                                registerViaEngramBtn.disabled = false;
+                            }
+                        });
+                    } else {
+                        openRegisterModal({
+                            songId, hash, title: t, artist: a, genre: g,
+                            contentHash: contentHash || '',
+                            fileSize: String(fileSize || 0),
+                            mimeType: mimeType || '',
+                            duration: String(durationSec || 0),
+                            previewArtCid: (artworkHash || '').trim()
+                        });
+                    }
+                };
+                if (copyScidSnippetBtn) copyScidSnippetBtn.onclick = () => {
+                    navigator.clipboard.writeText(`data-song-scid="${songId}"`);
+                    copyScidSnippetBtn.textContent = 'Copied!';
+                    setTimeout(() => copyScidSnippetBtn.textContent = 'Copy snippet', 2000);
+                };
+
+                const copySongCardBtn = document.getElementById('copySongCardBtn');
+                if (copySongCardBtn) copySongCardBtn.onclick = () => {
+                    const { title, artist, genre } = updateFlow();
+                    const t = (title || 'My Song').replace(/"/g, '&quot;');
+                    const a = (artist || 'Artist').replace(/"/g, '&quot;');
+                    const g = (genre || 'Electronic').replace(/"/g, '&quot;');
+                    const html = `<!-- ${t} by ${a} -->
+                <div class="song-card">
+                    <div class="song-artwork">
+                        <img src="${artworkImgSrc}" alt="${t} artwork">
+                    </div>
+                    <div class="song-info">
+                        <h3 class="song-title">${t}</h3>
+                        <p class="artist-name">${a}</p>
+                        <div class="song-tags">
+                            <span class="tag">${g}</span>
+                        </div>
+                    </div>
+                    <div class="player-section">
+                        <audio class="audio-player" controls>
+                            <source src="${gatewayUrl}" type="audio/mpeg">
+                        </audio>
+                    </div>
+                    <div class="mining-section">
+                        <button class="mine-btn" data-artist="YOUR_DERO_ADDRESS" data-song-id="songX" data-hashes="1000" data-song-name="${t}">Mine & Support</button>
+                        <button class="upvote-btn button-ghost" data-song-scid="${songId}">Upvote</button>
+                    </div>
+                </div>`;
+                    navigator.clipboard.writeText(html);
+                    copySongCardBtn.textContent = 'Copied!';
+                    setTimeout(() => copySongCardBtn.textContent = 'Copy full song card HTML', 2000);
+                };
+
+                // Pre-fill title from filename (without extension)
+                if (songTitle && file?.name) {
+                    const base = file.name.replace(/\.[^.]+$/, '');
+                    if (!songTitle.value) songTitle.value = base;
+                    updateFlow();
+                }
+
+            } catch (err) {
+                let msg = 'Something went wrong. Check your inputs and try again.';
+                if (typeof err === 'string') msg = err;
+                else if (err?.message) msg = err.message;
+                else if (err?.error && typeof err.error === 'string') msg = err.error;
+                else if (err && typeof err === 'object') msg = JSON.stringify(err).slice(0, 200) || msg;
+                // Network/CORS: connection refused, failed to fetch
+                if (msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('connection refused') || msg.toLowerCase().includes('network')) {
+                    msg = 'Cannot reach Pinata. Check your internet connection, or try again later.';
+                }
+                showError(msg);
+            }
+
+            if (!uploadBtn.classList.contains('upload-btn--next')) {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Publish Track';
+            }
+        });
+
+        function extractPinataError(data) {
+            if (!data) return null;
+            if (typeof data.error === 'string') return data.error;
+            if (typeof data.message === 'string') return data.message;
+            if (Array.isArray(data.errors) && data.errors[0]) {
+                const e = data.errors[0];
+                return typeof e === 'string' ? e : (e.message || e.error || JSON.stringify(e).slice(0, 150));
+            }
+            if (data.details && typeof data.details === 'string') return data.details;
+            if (data.details && typeof data.details === 'object') return data.details.message || JSON.stringify(data.details).slice(0, 150);
+            if (data.errors && typeof data.errors === 'object' && !Array.isArray(data.errors)) return JSON.stringify(data.errors).slice(0, 150);
+            return null;
+        }
+
+        function showError(msg) {
+            errorBox.textContent = String(msg || 'Unknown error');
+            errorBox.classList.add('show');
+        }
+    </script>
+</body>
+</html>
