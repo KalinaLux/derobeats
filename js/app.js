@@ -2,6 +2,13 @@
 // Complete XSWD + EPOCH Integration
 // Tela telaHost support (uses DERO.GetSC instead of Gnomon - bypasses indexing)
 
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").then(
+        () => console.log("📦 IPFS cache worker ready"),
+        (err) => console.warn("SW registration failed:", err)
+    );
+}
+
 let socket;
 let isConnected = false;
 let isTela = false; // true when running in Tela (window.telaHost)
