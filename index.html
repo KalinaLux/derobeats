@@ -164,18 +164,7 @@
                 <button id="importPlaylistBtn" class="playlist-bar-btn" title="Import a shared playlist">Import</button>
                 <span class="playlist-active-actions" style="display:none"></span>
             </div>
-            <!-- Custom playlist prompt modal -->
-            <div class="pl-modal-overlay" id="plModalOverlay">
-                <div class="pl-modal">
-                    <button class="pl-modal-close" id="plModalClose" title="Close">&times;</button>
-                    <p class="pl-modal-title" id="plModalTitle">Playlist name</p>
-                    <input type="text" class="pl-modal-input" id="plModalInput" autocomplete="off" spellcheck="false">
-                    <div class="pl-modal-btns">
-                        <button class="pl-modal-cancel" id="plModalCancel">Cancel</button>
-                        <button class="pl-modal-ok" id="plModalOk">OK</button>
-                    </div>
-                </div>
-            </div>
+            <!-- modal moved to body level for z-index reliability -->
             <div class="songs-grid" id="tracksGrid">
                 <!-- Demo placeholder (replaced by registry songs when loaded) -->
                 <div class="song-card song-card-demo">
@@ -251,6 +240,19 @@
             </div>
         </div>
     </footer>
+
+    <!-- Shared prompt / confirm modal (must be direct child of body for z-index) -->
+    <div class="pl-modal-overlay" id="plModalOverlay">
+        <div class="pl-modal">
+            <button class="pl-modal-close" id="plModalClose" title="Close">&times;</button>
+            <p class="pl-modal-title" id="plModalTitle">Playlist name</p>
+            <input type="text" class="pl-modal-input" id="plModalInput" autocomplete="off" spellcheck="false">
+            <div class="pl-modal-btns">
+                <button class="pl-modal-cancel" id="plModalCancel">Cancel</button>
+                <button class="pl-modal-ok" id="plModalOk">OK</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Upload modal (iframe keeps wallet connected) -->
     <div class="upload-modal-overlay" id="uploadModalOverlay">

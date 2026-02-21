@@ -2517,12 +2517,13 @@ audio::-webkit-media-controls-panel {
     display: none;
     position: fixed;
     inset: 0;
-    z-index: 9000;
+    z-index: 200000;
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     align-items: center;
     justify-content: center;
+    pointer-events: auto;
 }
 .pl-modal-overlay.show {
     display: flex;
