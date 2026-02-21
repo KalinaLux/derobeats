@@ -538,7 +538,7 @@ function handleResult(result) {
             } else {
                 window._gnomonRetryCount = 0;
                 showNotification("Registry not indexed yet. In Engram: Assets → Add SCID → paste registry SCID → Add. Then Refresh.", "warning");
-                const grid = document.querySelector(".songs-grid");
+                const grid = document.getElementById("tracksGrid");
                 if (grid) {
                     grid.innerHTML = getDemoSongHtml();
                     attachSongEventHandlers(grid);
@@ -1035,7 +1035,7 @@ function renderSongsFromRegistry(allVariables) {
     const keySample = Object.keys(vars).slice(0, 20).join(", ");
     console.log("📀 Registry data: total_songs=" + total + ", key count=" + Object.keys(vars).length + ", sample: " + keySample);
 
-    const grid = document.querySelector(".songs-grid");
+    const grid = document.getElementById("tracksGrid");
     if (!grid) return;
 
     if (total === 0) {
@@ -1100,7 +1100,7 @@ function renderSongsFromRegistry(allVariables) {
 }
 
 function renderSortedSongs(filterValue) {
-    const grid = document.querySelector(".songs-grid");
+    const grid = document.getElementById("tracksGrid");
     if (!grid || !_loadedSongs.length) return;
 
     if (filterValue !== undefined) _currentFilter = filterValue;
@@ -1359,6 +1359,7 @@ function enterPlaylistView(playlistId) {
     if (!pl) return;
     _activePlaylistId = playlistId;
     if (_activeTab !== "playlists") switchTab("playlists");
+    _showGrid("playlists");
     renderPlaylistBar();
     renderPlaylistSongs(pl);
 }
@@ -1369,15 +1370,15 @@ function exitPlaylistView() {
     if (sel) sel.value = "";
     renderPlaylistBar();
     if (_activeTab === "tracks") {
-        renderSortedSongs();
+        _showGrid("tracks");
     } else {
-        const grid = document.querySelector(".songs-grid");
+        const grid = document.getElementById("playlistsGrid");
         if (grid) grid.innerHTML = `<div class="songs-grid-empty"><p>Select or create a playlist above.</p></div>`;
     }
 }
 
 function renderPlaylistSongs(pl) {
-    const grid = document.querySelector(".songs-grid");
+    const grid = document.getElementById("playlistsGrid");
     if (!grid) return;
 
     const songs = pl.songIds.map(sid => _loadedSongs.find(s => s.songId === sid)).filter(Boolean);
@@ -1563,6 +1564,13 @@ function initPlaylistControls() {
 
 let _activeTab = "tracks";
 
+function _showGrid(which) {
+    const tg = document.getElementById("tracksGrid");
+    const pg = document.getElementById("playlistsGrid");
+    if (tg) tg.style.display = which === "tracks" ? "" : "none";
+    if (pg) pg.style.display = which === "playlists" ? "" : "none";
+}
+
 function switchTab(tab) {
     _activeTab = tab;
     document.querySelectorAll(".section-tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
@@ -1571,16 +1579,22 @@ function switchTab(tab) {
     if (tab === "tracks") {
         if (sortBar) sortBar.style.display = "";
         if (plBar) plBar.style.display = "none";
-        if (_activePlaylistId) exitPlaylistView();
-        else renderSortedSongs();
+        _activePlaylistId = null;
+        const sel = document.getElementById("playlistSelect");
+        if (sel) sel.value = "";
+        renderPlaylistBar();
+        _showGrid("tracks");
     } else {
         if (sortBar) sortBar.style.display = "none";
         if (plBar) plBar.style.display = "";
         const sel = document.getElementById("playlistSelect");
-        if (sel && sel.value) enterPlaylistView(sel.value);
-        else {
-            const grid = document.querySelector(".songs-grid");
+        if (sel && sel.value) {
+            _showGrid("playlists");
+            enterPlaylistView(sel.value);
+        } else {
+            const grid = document.getElementById("playlistsGrid");
             if (grid) grid.innerHTML = `<div class="songs-grid-empty"><p>Select or create a playlist above.</p></div>`;
+            _showGrid("playlists");
         }
     }
 }
