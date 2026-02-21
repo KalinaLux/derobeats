@@ -1216,70 +1216,90 @@ function updateFilterDropdowns() {
     artistSelect.innerHTML = '<option value="">All Artists</option>' + artists.map(a => `<option value="artist:${escapeHtml(a)}"${currentArtist === "artist:" + a ? " selected" : ""}>${escapeHtml(a)}</option>`).join("");
 }
 
-// ═══ SHARED MODAL HELPERS ═══
-// Uses onclick assignment (not addEventListener) so handlers always replace, never stack.
-function _modalCleanup() {
+// ═══ SHARED MODAL — single delegated handler, zero per-button wiring ═══
+let _modalResolve = null;
+let _modalMode = null; // "confirm" or "prompt"
+
+function _initModalDelegation() {
     const overlay = document.getElementById("plModalOverlay");
-    const inp = document.getElementById("plModalInput");
-    const okBtn = document.getElementById("plModalOk");
-    const cancelBtn = document.getElementById("plModalCancel");
-    const closeBtn = document.getElementById("plModalClose");
-    if (overlay) { overlay.classList.remove("show"); overlay.onclick = null; }
-    if (okBtn) { okBtn.onclick = null; okBtn.textContent = "OK"; }
-    if (cancelBtn) cancelBtn.onclick = null;
-    if (closeBtn) closeBtn.onclick = null;
-    if (inp) { inp.style.display = ""; inp.onkeydown = null; }
-    document.onkeydown = null;
-}
+    if (!overlay || overlay._delegated) return;
+    overlay._delegated = true;
 
-// ═══ STYLED CONFIRM (reuses playlist modal) ═══
-function plConfirm(message) {
-    return new Promise(resolve => {
-        _modalCleanup();
-        const overlay = document.getElementById("plModalOverlay");
-        const inp = document.getElementById("plModalInput");
-        const titleEl = document.getElementById("plModalTitle");
-        const okBtn = document.getElementById("plModalOk");
-        const cancelBtn = document.getElementById("plModalCancel");
-        const closeBtn = document.getElementById("plModalClose");
-        if (!overlay) { resolve(confirm(message)); return; }
-        titleEl.textContent = message;
-        inp.style.display = "none";
-        okBtn.textContent = "Confirm";
-        overlay.classList.add("show");
+    overlay.addEventListener("click", (e) => {
+        if (!_modalResolve) return;
+        const t = e.target;
+        if (t.id === "plModalOk" || t.closest("#plModalOk")) {
+            _resolveModal(_modalMode === "prompt"
+                ? document.getElementById("plModalInput").value
+                : true);
+        } else if (t.id === "plModalCancel" || t.closest("#plModalCancel") ||
+                   t.id === "plModalClose" || t.closest("#plModalClose")) {
+            _resolveModal(_modalMode === "prompt" ? null : false);
+        } else if (t === overlay) {
+            _resolveModal(_modalMode === "prompt" ? null : false);
+        }
+    });
 
-        const done = (val) => { _modalCleanup(); resolve(val); };
-        okBtn.onclick = () => done(true);
-        cancelBtn.onclick = () => done(false);
-        if (closeBtn) closeBtn.onclick = () => done(false);
-        overlay.onclick = (e) => { if (e.target === overlay) done(false); };
-        document.onkeydown = (e) => { if (e.key === "Enter") done(true); if (e.key === "Escape") done(false); };
-        okBtn.focus();
+    document.addEventListener("keydown", (e) => {
+        if (!_modalResolve) return;
+        if (e.key === "Enter") {
+            e.preventDefault();
+            _resolveModal(_modalMode === "prompt"
+                ? document.getElementById("plModalInput").value
+                : true);
+        } else if (e.key === "Escape") {
+            _resolveModal(_modalMode === "prompt" ? null : false);
+        }
     });
 }
 
-// ═══ PLAYLIST CUSTOM MODAL ═══
-function plPrompt(title, defaultVal) {
+function _resolveModal(value) {
+    const fn = _modalResolve;
+    if (!fn) return;
+    _modalResolve = null;
+    _modalMode = null;
+    const overlay = document.getElementById("plModalOverlay");
+    const inp = document.getElementById("plModalInput");
+    const okBtn = document.getElementById("plModalOk");
+    if (overlay) overlay.classList.remove("show");
+    if (inp) inp.style.display = "";
+    if (okBtn) okBtn.textContent = "OK";
+    fn(value);
+}
+
+// ═══ STYLED CONFIRM ═══
+function plConfirm(message) {
+    _initModalDelegation();
+    if (_modalResolve) _resolveModal(false);
     return new Promise(resolve => {
-        _modalCleanup();
+        _modalResolve = resolve;
+        _modalMode = "confirm";
         const overlay = document.getElementById("plModalOverlay");
         const inp = document.getElementById("plModalInput");
         const titleEl = document.getElementById("plModalTitle");
         const okBtn = document.getElementById("plModalOk");
-        const cancelBtn = document.getElementById("plModalCancel");
-        const closeBtn = document.getElementById("plModalClose");
-        if (!overlay) { resolve(prompt(title, defaultVal || "")); return; }
-        titleEl.textContent = title;
-        inp.value = defaultVal || "";
+        if (!overlay) { resolve(confirm(message)); return; }
+        if (titleEl) titleEl.textContent = message;
+        if (inp) inp.style.display = "none";
+        if (okBtn) okBtn.textContent = "Confirm";
         overlay.classList.add("show");
+    });
+}
 
-        const done = (val) => { _modalCleanup(); resolve(val); };
-        okBtn.onclick = () => done(inp.value);
-        cancelBtn.onclick = () => done(null);
-        if (closeBtn) closeBtn.onclick = () => done(null);
-        overlay.onclick = (e) => { if (e.target === overlay) done(null); };
-        inp.onkeydown = (e) => { if (e.key === "Enter") done(inp.value); if (e.key === "Escape") done(null); };
-        inp.focus();
+// ═══ PLAYLIST PROMPT ═══
+function plPrompt(title, defaultVal) {
+    _initModalDelegation();
+    if (_modalResolve) _resolveModal(null);
+    return new Promise(resolve => {
+        _modalResolve = resolve;
+        _modalMode = "prompt";
+        const overlay = document.getElementById("plModalOverlay");
+        const inp = document.getElementById("plModalInput");
+        const titleEl = document.getElementById("plModalTitle");
+        if (!overlay) { resolve(prompt(title, defaultVal || "")); return; }
+        if (titleEl) titleEl.textContent = title;
+        if (inp) { inp.value = defaultVal || ""; inp.focus(); }
+        overlay.classList.add("show");
     });
 }
 
