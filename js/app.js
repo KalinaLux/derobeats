@@ -1216,16 +1216,26 @@ function updateFilterDropdowns() {
     artistSelect.innerHTML = '<option value="">All Artists</option>' + artists.map(a => `<option value="artist:${escapeHtml(a)}"${currentArtist === "artist:" + a ? " selected" : ""}>${escapeHtml(a)}</option>`).join("");
 }
 
-// Abort controller for the shared modal -- ensures no stale listeners survive between calls
-let _modalAbort = null;
+// ═══ SHARED MODAL HELPERS ═══
+// Uses onclick assignment (not addEventListener) so handlers always replace, never stack.
+function _modalCleanup() {
+    const overlay = document.getElementById("plModalOverlay");
+    const inp = document.getElementById("plModalInput");
+    const okBtn = document.getElementById("plModalOk");
+    const cancelBtn = document.getElementById("plModalCancel");
+    const closeBtn = document.getElementById("plModalClose");
+    if (overlay) { overlay.classList.remove("show"); overlay.onclick = null; }
+    if (okBtn) { okBtn.onclick = null; okBtn.textContent = "OK"; }
+    if (cancelBtn) cancelBtn.onclick = null;
+    if (closeBtn) closeBtn.onclick = null;
+    if (inp) { inp.style.display = ""; inp.onkeydown = null; }
+    document.onkeydown = null;
+}
 
 // ═══ STYLED CONFIRM (reuses playlist modal) ═══
 function plConfirm(message) {
     return new Promise(resolve => {
-        if (_modalAbort) _modalAbort.abort();
-        _modalAbort = new AbortController();
-        const sig = { signal: _modalAbort.signal };
-
+        _modalCleanup();
         const overlay = document.getElementById("plModalOverlay");
         const inp = document.getElementById("plModalInput");
         const titleEl = document.getElementById("plModalTitle");
@@ -1237,30 +1247,21 @@ function plConfirm(message) {
         inp.style.display = "none";
         okBtn.textContent = "Confirm";
         overlay.classList.add("show");
+
+        const done = (val) => { _modalCleanup(); resolve(val); };
+        okBtn.onclick = () => done(true);
+        cancelBtn.onclick = () => done(false);
+        if (closeBtn) closeBtn.onclick = () => done(false);
+        overlay.onclick = (e) => { if (e.target === overlay) done(false); };
+        document.onkeydown = (e) => { if (e.key === "Enter") done(true); if (e.key === "Escape") done(false); };
         okBtn.focus();
-        const cleanup = () => {
-            if (_modalAbort) { _modalAbort.abort(); _modalAbort = null; }
-            overlay.classList.remove("show");
-            inp.style.display = "";
-            okBtn.textContent = "OK";
-        };
-        const onOk = () => { cleanup(); resolve(true); };
-        const onCancel = () => { cleanup(); resolve(false); };
-        okBtn.addEventListener("click", onOk, sig);
-        cancelBtn.addEventListener("click", onCancel, sig);
-        if (closeBtn) closeBtn.addEventListener("click", onCancel, sig);
-        overlay.addEventListener("click", (e) => { if (e.target === overlay) onCancel(); }, sig);
-        document.addEventListener("keydown", (e) => { if (e.key === "Enter") onOk(); if (e.key === "Escape") onCancel(); }, sig);
     });
 }
 
 // ═══ PLAYLIST CUSTOM MODAL ═══
 function plPrompt(title, defaultVal) {
     return new Promise(resolve => {
-        if (_modalAbort) _modalAbort.abort();
-        _modalAbort = new AbortController();
-        const sig = { signal: _modalAbort.signal };
-
+        _modalCleanup();
         const overlay = document.getElementById("plModalOverlay");
         const inp = document.getElementById("plModalInput");
         const titleEl = document.getElementById("plModalTitle");
@@ -1271,18 +1272,14 @@ function plPrompt(title, defaultVal) {
         titleEl.textContent = title;
         inp.value = defaultVal || "";
         overlay.classList.add("show");
+
+        const done = (val) => { _modalCleanup(); resolve(val); };
+        okBtn.onclick = () => done(inp.value);
+        cancelBtn.onclick = () => done(null);
+        if (closeBtn) closeBtn.onclick = () => done(null);
+        overlay.onclick = (e) => { if (e.target === overlay) done(null); };
+        inp.onkeydown = (e) => { if (e.key === "Enter") done(inp.value); if (e.key === "Escape") done(null); };
         inp.focus();
-        const cleanup = () => {
-            if (_modalAbort) { _modalAbort.abort(); _modalAbort = null; }
-            overlay.classList.remove("show");
-        };
-        const onOk = () => { cleanup(); resolve(inp.value); };
-        const onCancel = () => { cleanup(); resolve(null); };
-        okBtn.addEventListener("click", onOk, sig);
-        cancelBtn.addEventListener("click", onCancel, sig);
-        if (closeBtn) closeBtn.addEventListener("click", onCancel, sig);
-        overlay.addEventListener("click", (e) => { if (e.target === overlay) onCancel(); }, sig);
-        inp.addEventListener("keydown", (e) => { if (e.key === "Enter") onOk(); if (e.key === "Escape") onCancel(); }, sig);
     });
 }
 
