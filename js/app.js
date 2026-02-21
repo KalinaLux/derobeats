@@ -1,10 +1,10 @@
 // DeroBeats - Phase 1: Personal Music Site
 // Complete XSWD + EPOCH Integration
-// Hologram telaHost support (uses DERO.GetSC instead of Gnomon - bypasses indexing)
+// Tela telaHost support (uses DERO.GetSC instead of Gnomon - bypasses indexing)
 
 let socket;
 let isConnected = false;
-let isHologram = false; // true when running in Hologram (window.telaHost)
+let isTela = false; // true when running in Tela (window.telaHost)
 let userAddress = "";
 let epochVerified = false;
 let pendingEpochVerification = false;
@@ -110,8 +110,8 @@ function tryNextGateway(el, cid, isAudio) {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    isHologram = typeof telaHost !== 'undefined' && telaHost;
-    if (isHologram) console.log('🎵 DeroBeats running in Hologram (telaHost)');
+    isTela = typeof telaHost !== 'undefined' && telaHost;
+    if (isTela) console.log('🎵 DeroBeats running in Tela (telaHost)');
     else console.log('🎵 DeroBeats initializing (XSWD/Engram)...');
 
     // Gate shows unless: they just clicked "Back to DeroBeats" from upload (?from=upload).
@@ -125,8 +125,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Hologram: if already connected, auto-populate and hide gate
-    if (isHologram && typeof telaHost !== 'undefined' && telaHost?.isConnected && telaHost.isConnected()) {
+    // Tela: if already connected, auto-populate and hide gate
+    if (isTela && typeof telaHost !== 'undefined' && telaHost?.isConnected && telaHost.isConnected()) {
         (async () => {
             try {
                 userAddress = await telaHost.getAddress();
@@ -162,11 +162,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Refresh songs button (reload from registry - like FEED)
     document.getElementById('refreshSongsBtn')?.addEventListener('click', function() {
-        if (!isHologram && (!epochVerified || !isConnected)) {
+        if (!isTela && (!epochVerified || !isConnected)) {
             showNotification("Complete EPOCH verification first", "error");
             return;
         }
-        if (isHologram && !isConnected) {
+        if (isTela && !isConnected) {
             showNotification("Connect wallet first", "error");
             return;
         }
@@ -284,16 +284,16 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-// Connect to wallet via XSWD (Engram) or telaHost (Hologram)
+// Connect to wallet via XSWD (Engram) or telaHost (Tela)
 async function connectWallet() {
     if (isConnected) {
         disconnectWallet();
         return;
     }
 
-    if (isHologram) {
+    if (isTela) {
         try {
-            console.log('🔌 Connecting via Hologram telaHost...');
+            console.log('🔌 Connecting via Tela telaHost...');
             await telaHost.connect();
             if (!telaHost.isConnected()) {
                 showNotification("Connection was not established", "error");
@@ -301,7 +301,7 @@ async function connectWallet() {
             }
             userAddress = await telaHost.getAddress();
             isConnected = true;
-            epochVerified = true; // Hologram: skip EPOCH gate
+            epochVerified = true; // Tela: skip EPOCH gate
             updateIndicators("green");
             document.getElementById('connectButton').textContent = "Disconnect";
             document.getElementById('walletAddress').textContent = `${userAddress.substring(0, 12)}...${userAddress.substring(userAddress.length - 8)}`;
@@ -394,11 +394,11 @@ function disconnectWallet() {
     // Flush accumulated hashes while socket is still open
     flushHashAccumulator();
 
-    if (!isHologram && socket) {
+    if (!isTela && socket) {
         // Brief delay so the hash transactions get sent before we close
         setTimeout(() => { if (socket) { socket.close(); socket = null; } }, 600);
     }
-    if (isHologram && telaHost?.isConnected && telaHost.isConnected()) {
+    if (isTela && telaHost?.isConnected && telaHost.isConnected()) {
         flushHashAccumulator();
     }
 
@@ -635,15 +635,15 @@ function registerSong(songSCID, title, artist, genre, ipfsHash, extras) {
         { name: "previewArtCid", datatype: "S", value: safePreviewArtCid }
     ];
 
-    const holoScRpc = scRpc.filter(x => x.name !== "entrypoint"); // telaHost uses separate entrypoint param
+    const telaScRpc = scRpc.filter(x => x.name !== "entrypoint"); // telaHost uses separate entrypoint param
 
-    if (isHologram) {
+    if (isTela) {
         (async () => {
             try {
                 const result = await telaHost.scInvoke({
                     scid: registryScid,
                     entrypoint: "RegisterSong",
-                    sc_rpc: holoScRpc
+                    sc_rpc: telaScRpc
                 });
                 showNotification("✅ Registered! TX: " + (result?.txid || '').slice(0, 16) + "... Wait ~18s for Gnomon to index.", "success");
                 if (window._derobeatsIframeRegisterSource) {
@@ -707,7 +707,7 @@ function upvoteSong(songSCID) {
         return;
     }
 
-    if (isHologram) {
+    if (isTela) {
         (async () => {
             try {
                 await telaHost.scInvoke({
@@ -978,9 +978,9 @@ function attachSongEventHandlers(container) {
     });
 }
 
-// Load songs from registry — Gnomon (Engram) or telaHost.getSmartContract (Hologram)
+// Load songs from registry — Gnomon (Engram) or telaHost.getSmartContract (Tela)
 async function loadSongsFromRegistry() {
-    if (isHologram) {
+    if (isTela) {
         try {
             const sc = await telaHost.getSmartContract(registryScid);
             const allVariables = [];
@@ -995,10 +995,10 @@ async function loadSongsFromRegistry() {
                     allVariables.push({ Key: k, Value: v });
                 }
             }
-            console.log("📀 Hologram getSmartContract: " + allVariables.length + " keys");
+            console.log("📀 Tela getSmartContract: " + allVariables.length + " keys");
             renderSongsFromRegistry(allVariables);
         } catch (err) {
-            console.error("📀 Hologram getSmartContract error:", err);
+            console.error("📀 Tela getSmartContract error:", err);
             showNotification("Failed to load registry: " + (err?.message || err), "error");
         }
         return;

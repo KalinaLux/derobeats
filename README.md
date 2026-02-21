@@ -15,7 +15,7 @@ DeroBeats is a fully decentralized music registry and streaming platform built o
 - **Play tracking** -- cumulative hash counts recorded on-chain per song
 - **Playlists** -- local playlist creation, reordering, sharing via encoded codes
 - **Multi-gateway IPFS** -- automatic fallback across 5 IPFS gateways if one throttles
-- **Tela-native** -- designed to run inside DERO's Tela web framework (Hologram browser)
+- **Tela-native** -- designed to run inside DERO's Tela web framework
 
 ## How It Works
 
@@ -54,9 +54,9 @@ The contract source is in [`derobeats-registry-mv5.bas`](derobeats-registry-mv5.
 
 ## Deployment
 
-### Tela (Hologram)
+### Tela
 
-DeroBeats is designed to run as a Tela site inside DERO's Hologram browser. The site files (`index.html`, `upload.html`, `css/`, `js/`) get sharded on-chain and served natively.
+DeroBeats is designed to run as a Tela site on DERO. The site files (`index.html`, `upload.html`, `css/`, `js/`) get sharded on-chain and served natively through any Tela-compatible browser.
 
 ### Standalone (Engram + XSWD)
 
