@@ -1209,9 +1209,16 @@ function updateFilterDropdowns() {
     artistSelect.innerHTML = '<option value="">All Artists</option>' + artists.map(a => `<option value="artist:${escapeHtml(a)}"${currentArtist === "artist:" + a ? " selected" : ""}>${escapeHtml(a)}</option>`).join("");
 }
 
+// Abort controller for the shared modal -- ensures no stale listeners survive between calls
+let _modalAbort = null;
+
 // ═══ STYLED CONFIRM (reuses playlist modal) ═══
 function plConfirm(message) {
     return new Promise(resolve => {
+        if (_modalAbort) _modalAbort.abort();
+        _modalAbort = new AbortController();
+        const sig = { signal: _modalAbort.signal };
+
         const overlay = document.getElementById("plModalOverlay");
         const inp = document.getElementById("plModalInput");
         const titleEl = document.getElementById("plModalTitle");
@@ -1225,29 +1232,28 @@ function plConfirm(message) {
         overlay.classList.add("show");
         okBtn.focus();
         const cleanup = () => {
+            if (_modalAbort) { _modalAbort.abort(); _modalAbort = null; }
             overlay.classList.remove("show");
             inp.style.display = "";
             okBtn.textContent = "OK";
-            okBtn.removeEventListener("click", onOk);
-            cancelBtn.removeEventListener("click", onCancel);
-            if (closeBtn) closeBtn.removeEventListener("click", onCancel);
-            overlay.removeEventListener("click", onOverlay);
         };
         const onOk = () => { cleanup(); resolve(true); };
         const onCancel = () => { cleanup(); resolve(false); };
-        const onOverlay = (e) => { if (e.target === overlay) onCancel(); };
-        const onKey = (e) => { if (e.key === "Enter") onOk(); if (e.key === "Escape") onCancel(); };
-        okBtn.addEventListener("click", onOk);
-        cancelBtn.addEventListener("click", onCancel);
-        if (closeBtn) closeBtn.addEventListener("click", onCancel);
-        overlay.addEventListener("click", onOverlay);
-        document.addEventListener("keydown", onKey, { once: true });
+        okBtn.addEventListener("click", onOk, sig);
+        cancelBtn.addEventListener("click", onCancel, sig);
+        if (closeBtn) closeBtn.addEventListener("click", onCancel, sig);
+        overlay.addEventListener("click", (e) => { if (e.target === overlay) onCancel(); }, sig);
+        document.addEventListener("keydown", (e) => { if (e.key === "Enter") onOk(); if (e.key === "Escape") onCancel(); }, sig);
     });
 }
 
 // ═══ PLAYLIST CUSTOM MODAL ═══
 function plPrompt(title, defaultVal) {
     return new Promise(resolve => {
+        if (_modalAbort) _modalAbort.abort();
+        _modalAbort = new AbortController();
+        const sig = { signal: _modalAbort.signal };
+
         const overlay = document.getElementById("plModalOverlay");
         const inp = document.getElementById("plModalInput");
         const titleEl = document.getElementById("plModalTitle");
@@ -1260,22 +1266,16 @@ function plPrompt(title, defaultVal) {
         overlay.classList.add("show");
         inp.focus();
         const cleanup = () => {
+            if (_modalAbort) { _modalAbort.abort(); _modalAbort = null; }
             overlay.classList.remove("show");
-            okBtn.removeEventListener("click", onOk);
-            cancelBtn.removeEventListener("click", onCancel);
-            if (closeBtn) closeBtn.removeEventListener("click", onCancel);
-            overlay.removeEventListener("click", onOverlay);
-            inp.removeEventListener("keydown", onKey);
         };
         const onOk = () => { cleanup(); resolve(inp.value); };
         const onCancel = () => { cleanup(); resolve(null); };
-        const onKey = (e) => { if (e.key === "Enter") onOk(); if (e.key === "Escape") onCancel(); };
-        const onOverlay = (e) => { if (e.target === overlay) onCancel(); };
-        okBtn.addEventListener("click", onOk);
-        cancelBtn.addEventListener("click", onCancel);
-        if (closeBtn) closeBtn.addEventListener("click", onCancel);
-        overlay.addEventListener("click", onOverlay);
-        inp.addEventListener("keydown", onKey);
+        okBtn.addEventListener("click", onOk, sig);
+        cancelBtn.addEventListener("click", onCancel, sig);
+        if (closeBtn) closeBtn.addEventListener("click", onCancel, sig);
+        overlay.addEventListener("click", (e) => { if (e.target === overlay) onCancel(); }, sig);
+        inp.addEventListener("keydown", (e) => { if (e.key === "Enter") onOk(); if (e.key === "Escape") onCancel(); }, sig);
     });
 }
 
