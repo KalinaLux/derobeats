@@ -39,14 +39,20 @@ let _activePlaylistId = null; // null = "All Tracks" view
 const EPOCH_VERIFY_HASHES = 10;
 const EPOCH_VERIFY_ADDRESS = "dero1qygfgg5hq4fracps4q8cxwzvyjvmh85kewfwc75nxnfpg6grsr4nyqqket86l";
 
-// ⚠️ IMPORTANT: Generate a unique app ID
-// Run: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-const applicationData = {
-    "id": "712844040aa87fc8e2ba24f38dbd6452e5856f9910715ddebca9ca529f21ea08",
-    "name": "DeroBeats - Underground Music Platform",
-    "description": "Support underground artists through EPOCH mining. No ads, no tracking, 100% to artists.",
-    "url": "http://localhost:" + location.port
-};
+// Dynamic app ID — avoids Engram "App ID is already used" on reconnect
+function _freshAppId() {
+    return Array.from(crypto.getRandomValues(new Uint8Array(32)))
+        .map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function _buildAppData() {
+    return {
+        id: _freshAppId(),
+        name: "DeroBeats - Underground Music Platform",
+        description: "Support underground artists through EPOCH mining. No ads, no tracking, 100% to artists.",
+        url: location.origin || ("http://localhost:" + location.port)
+    };
+}
 
 // Registry contract SCID - DeroBeats registry (installed)
 const registryScid = "88aa9c31ca557eb87fe0ff4c1f077fd5a41c0613f63090c58f82d0452929929c";
@@ -293,16 +299,37 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Footer "Support DeroBeats" donate button
+    document.getElementById("footerDonateBtn")?.addEventListener("click", async () => {
+        if (!isConnected || !epochVerified) {
+            showNotification("Connect wallet first", "error");
+            return;
+        }
+        const amt = await plPrompt("Donate DERO to DeroBeats", "1");
+        if (!amt || !amt.trim()) return;
+        const val = parseFloat(amt.trim());
+        if (isNaN(val) || val <= 0) { showNotification("Enter a valid amount", "error"); return; }
+        const atomic = Math.round(val * 100000);
+        sendRequest("transfer", {
+            transfers: [{ destination: EPOCH_VERIFY_ADDRESS, amount: atomic }],
+            ringsize: 16
+        });
+        showNotification(`Sending ${val} DERO to DeroBeats — thank you!`, "success");
+    });
+
     console.log('✅ DeroBeats ready!');
 });
 
 
 // Connect to wallet via XSWD (Engram) or telaHost (Tela)
+let _connectingInProgress = false;
+
 async function connectWallet() {
     if (isConnected) {
         disconnectWallet();
         return;
     }
+    if (_connectingInProgress) return;
 
     if (isTela) {
         try {
@@ -333,26 +360,39 @@ async function connectWallet() {
         return;
     }
 
+    // Tear down any stale socket from a previous attempt
+    if (socket) {
+        try { socket.onopen = null; socket.onmessage = null; socket.onerror = null; socket.onclose = null; socket.close(); } catch (_) {}
+        socket = null;
+    }
+
+    _connectingInProgress = true;
     console.log('🔌 Connecting to wallet...');
+    const appData = _buildAppData();
     socket = new WebSocket("ws://localhost:44326/xswd");
     
-    socket.addEventListener("open", function(event) {
+    socket.addEventListener("open", function() {
         console.log("✅ WebSocket connected");
         updateIndicators("yellow");
-        socket.send(JSON.stringify(applicationData));
+        socket.send(JSON.stringify(appData));
     });
     
     socket.addEventListener("message", function(event) {
         const response = JSON.parse(event.data);
         console.log("📨 Response:", response);
+
+        if (response.accepted === false) {
+            console.warn("❌ Connection rejected:", response.message);
+            showNotification(response.message || "Connection rejected by Engram", "error");
+            _connectingInProgress = false;
+            return;
+        }
         
         if (response.accepted) {
-            console.log("✅ Connection accepted!");
+            console.log("✅ Connection accepted! Requesting address...");
+            _connectingInProgress = false;
             sendRequest("GetAddress");
-            sendRequest("GetBalance");
-            loadSongsFromRegistry();
-            // Run EPOCH verification - required to unlock site
-            runEpochVerification();
+            return;
         }
         
         const _respId = typeof response.id === 'string' ? response.id.replace(/^"|"$/g, '') : String(response.id || '');
@@ -386,13 +426,15 @@ async function connectWallet() {
     
     socket.addEventListener("error", function(event) {
         console.error("❌ WebSocket error:", event);
+        _connectingInProgress = false;
         showNotification("Failed to connect. Is Engram running?", "error");
         updateIndicators("red");
     });
     
     socket.addEventListener("close", function(event) {
         console.log("🔌 Connection closed");
-        disconnectWallet();
+        _connectingInProgress = false;
+        if (isConnected) disconnectWallet();
     });
 }
 
@@ -408,8 +450,11 @@ function disconnectWallet() {
     flushHashAccumulator();
 
     if (!isTela && socket) {
-        // Brief delay so the hash transactions get sent before we close
-        setTimeout(() => { if (socket) { socket.close(); socket = null; } }, 600);
+        const s = socket;
+        socket = null;
+        // Detach handlers to prevent recursive disconnectWallet from close event
+        try { s.onopen = null; s.onmessage = null; s.onerror = null; s.onclose = null; } catch (_) {}
+        setTimeout(() => { try { s.close(); } catch (_) {} }, 600);
     }
     if (isTela && telaHost?.isConnected && telaHost.isConnected()) {
         flushHashAccumulator();
@@ -425,6 +470,7 @@ function disconnectWallet() {
     document.getElementById('walletAddress').textContent = "";
     document.getElementById('balance').textContent = "";
     showEpochGate();
+    window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 // EPOCH gate UI helpers
@@ -468,6 +514,7 @@ function hideEpochGate() {
     const gate = document.getElementById('epochGate');
     if (gate) gate.classList.add('hidden');
     sessionStorage.setItem('derobeats_gate_passed', '1');
+    window.scrollTo({ top: 0, behavior: "smooth" });
 }
 function runEpochVerification() {
     if (!socket || socket.readyState !== WebSocket.OPEN || !isConnected) return;
@@ -504,16 +551,21 @@ function sendRequest(method, params = null) {
 
 // Handle response results
 function handleResult(result) {
-    // Handle address response
+    // Handle address response — connection is now stable
     if (result.address) {
         userAddress = result.address;
         isConnected = true;
         updateIndicators("green");
         document.getElementById('connectButton').textContent = "Disconnect";
         document.getElementById('walletAddress').textContent = `${userAddress.substring(0, 12)}...${userAddress.substring(userAddress.length - 8)}`;
-        // showNotification("🎉 Wallet connected!", "success");  // removed; only show Epoch Verified
         console.log("✅ Address:", userAddress);
-        if (!epochVerified) setEpochGateReadyToVerify();
+
+        // Stagger remaining requests now that the connection is confirmed stable
+        sendRequest("GetBalance");
+        if (!epochVerified) {
+            setEpochGateVerifying();
+            setTimeout(() => runEpochVerification(), 300);
+        }
     }
     
     // Handle balance response
@@ -572,6 +624,7 @@ function handleResult(result) {
             hideEpochGate();
             showNotification("✓ Epoch Verified.", "success");
             console.log("✅ EPOCH verification passed");
+            loadSongsFromRegistry();
         } else {
             console.log(`⛏️ Mined ${hashes} hashes in ${duration}ms (${minis} miniblocks)`);
         }
@@ -927,6 +980,32 @@ function getDemoSongHtml() {
 </div>`;
 }
 
+function _updateMediaSession(card, audioEl) {
+    if (!("mediaSession" in navigator)) return;
+    const title = card?.querySelector(".song-title")?.textContent || "DeroBeats";
+    const artist = card?.querySelector(".artist-name")?.textContent || "";
+    const artImg = card?.querySelector(".song-artwork img");
+    const artSrc = artImg?.src || "";
+    navigator.mediaSession.metadata = new MediaMetadata({
+        title, artist, album: "DeroBeats",
+        artwork: artSrc ? [{ src: artSrc, sizes: "512x512", type: "image/png" }] : []
+    });
+    navigator.mediaSession.setActionHandler("play", () => audioEl.play());
+    navigator.mediaSession.setActionHandler("pause", () => audioEl.pause());
+    navigator.mediaSession.setActionHandler("nexttrack", () => {
+        const players = Array.from(document.querySelectorAll("audio"));
+        const idx = players.indexOf(audioEl);
+        const next = players[idx + 1];
+        if (next) next.play().catch(() => {});
+    });
+    navigator.mediaSession.setActionHandler("previoustrack", () => {
+        const players = Array.from(document.querySelectorAll("audio"));
+        const idx = players.indexOf(audioEl);
+        const prev = players[idx - 1];
+        if (prev) prev.play().catch(() => {});
+    });
+}
+
 // Attach click handlers for upvote, remove, continuous mine-while-playing, and auto-advance
 function attachSongEventHandlers(container) {
     if (!container) return;
@@ -948,6 +1027,7 @@ function attachSongEventHandlers(container) {
             if (isConnected && epochVerified && artistAddr && artistAddr !== "YOUR_DERO_ADDRESS_HERE") {
                 startContinuousMining(this, artistAddr, songId, songName, songScid);
             }
+            _updateMediaSession(card, this);
         });
 
         player.addEventListener("pause", function () {
@@ -1601,6 +1681,11 @@ function _showGrid(which) {
     if (pg) pg.style.display = which === "playlists" ? "" : "none";
 }
 
+function _hasPlayingAudio(container) {
+    if (!container) return false;
+    return Array.from(container.querySelectorAll("audio")).some(a => !a.paused && !a.ended);
+}
+
 function switchTab(tab) {
     _activeTab = tab;
     document.querySelectorAll(".section-tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
@@ -1623,7 +1708,9 @@ function switchTab(tab) {
             enterPlaylistView(sel.value);
         } else {
             const grid = document.getElementById("playlistsGrid");
-            if (grid) grid.innerHTML = `<div class="songs-grid-empty"><p>Select or create a playlist above.</p></div>`;
+            if (grid && !_hasPlayingAudio(grid)) {
+                grid.innerHTML = `<div class="songs-grid-empty"><p>Select or create a playlist above.</p></div>`;
+            }
             _showGrid("playlists");
         }
     }

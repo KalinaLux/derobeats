@@ -8,13 +8,15 @@ DeroBeats is a fully decentralized music registry and streaming platform built o
 
 ## Features
 
-- **On-chain song registry** -- publish, discover, and stream tracks stored on IPFS
+- **On-chain song registry** -- publish, discover, and stream tracks stored on IPFS or any direct URL
 - **EPOCH mining to artists** -- listeners mine hashes directly to artist wallets during playback
 - **Donations** -- tip artists in DERO, forwarded instantly by the smart contract
 - **Upvoting** -- on-chain upvotes, one per wallet per song
 - **Play tracking** -- cumulative hash counts recorded on-chain per song
 - **Playlists** -- local playlist creation, reordering, sharing via encoded codes
-- **Multi-gateway IPFS** -- automatic fallback across 5 IPFS gateways if one throttles
+- **Multi-gateway IPFS + Service Worker** -- smart caching across 7 IPFS gateways with automatic failover
+- **Direct URL hosting** -- artists can host media anywhere (IPFS, GitHub, Catbox, private server)
+- **Background playback** -- MediaSession API keeps audio playing across browser tabs with Now Playing controls
 - **Tela-native** -- designed to run inside DERO's Tela web framework
 
 ## How It Works
@@ -70,7 +72,7 @@ You can also run DeroBeats as a regular website:
 ### Publishing a Track
 
 1. Click "Upload your track" to open the upload form
-2. Upload an MP3 (and optional artwork) to IPFS via Pinata, or paste CIDs directly
+2. Upload an MP3 (and optional artwork) to IPFS via Pinata, paste CIDs, or paste any direct URL
 3. Click "Register on chain" to write the song to the registry
 4. Approve the transaction in Engram
 5. Wait ~18 seconds for Gnomon to index, then refresh
@@ -83,6 +85,7 @@ upload.html             Track upload + registration flow
 css/style.css           All styles
 js/app.js               App logic (wallet, registry, mining, playlists)
 js/xswd.js              XSWD WebSocket helper
+sw.js                   Service worker (IPFS multi-gateway cache + failover)
 derobeats-registry-mv5.bas   Smart contract source (DVM-BASIC)
 docs/CURLS.md           Curl commands for testing the contract
 docs/REGISTRY_SETUP.md  Contract deployment instructions

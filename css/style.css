@@ -261,7 +261,7 @@ body {
     margin-top: 12px;
 }
 .epoch-gate-verifying {
-    color: var(--gold-light);
+    color: var(--captain-green);
     font-size: 1rem;
 }
 
@@ -1766,6 +1766,26 @@ audio::-webkit-media-controls-panel {
     letter-spacing: 0.1em;
     text-transform: uppercase;
     margin: 16px 0 0 0;
+}
+.footer-donate-btn {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--hot-pink);
+    background: transparent;
+    border: 1px solid rgba(255, 45, 120, 0.25);
+    border-radius: 6px;
+    padding: 8px 20px;
+    margin-top: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.footer-donate-btn:hover {
+    background: rgba(255, 45, 120, 0.08);
+    border-color: var(--hot-pink);
+    box-shadow: 0 0 16px rgba(255, 45, 120, 0.12);
 }
 
 .footer-section h4 {
