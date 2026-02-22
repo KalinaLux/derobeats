@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload to IPFS - DeroBeats</title>
+    <title>Publish Your Track - DeroBeats</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
         .upload-container {
@@ -660,9 +660,9 @@
             <div class="guide-step-card">
                 <div class="guide-step-number">1</div>
                 <div class="guide-step-body">
-                    <h2 class="upload-guide-h2">Pin to IPFS</h2>
-                    <p>Upload your MP3 and optional artwork through the form. We support <strong>Pinata</strong> out of the box &mdash; just paste your JWT.</p>
-                    <p>Run your own IPFS node? Use any provider you like. Just paste the CID directly and skip the upload entirely.</p>
+                    <h2 class="upload-guide-h2">Host Your Music</h2>
+                    <p>Upload your MP3 and optional artwork through the form. We support <strong>Pinata</strong> (IPFS) out of the box &mdash; just paste your JWT.</p>
+                    <p>Prefer another host? Paste a direct URL from any provider (Catbox, Dropbox, personal server) or an IPFS CID from your own node.</p>
                     <p class="guide-emphasis">No servers. No custody. No middle layer.</p>
                 </div>
             </div>
@@ -701,7 +701,7 @@
                     </div>
                     <div class="guide-req-item">
                         <span class="guide-req-icon">&#8962;</span>
-                        <span>IPFS provider <small>(or your own node)</small></span>
+                        <span>File host <small>(IPFS, Catbox, any URL)</small></span>
                     </div>
                     <div class="guide-req-item">
                         <span class="guide-req-icon">&#9835;</span>
@@ -721,8 +721,8 @@
     </div>
 
     <div class="upload-container">
-        <h1>Upload to IPFS</h1>
-        <p class="subtitle">Pin your track &bull; Any IPFS provider &bull; Register on-chain</p>
+        <h1>Publish Your Track</h1>
+        <p class="subtitle">Upload via IPFS &bull; Or paste any direct URL &bull; Register on-chain</p>
 
         <form class="upload-form" id="uploadForm" autocomplete="off">
             <div class="form-group">
@@ -797,18 +797,18 @@
             </div>
 
             <div class="form-group-divider">
-                <span class="divider-label">Or paste CIDs directly</span>
+                <span class="divider-label">Or paste a CID / direct URL</span>
             </div>
 
             <div class="form-group">
-                <label>MP3 IPFS CID</label>
-                <input type="text" id="mp3CidInput" placeholder="e.g. bafybei..." autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" spellcheck="false">
-                <p class="hint">Already pinned your track elsewhere? Paste the CID &mdash; skips Pinata entirely.</p>
+                <label>MP3 Link (IPFS CID or direct URL)</label>
+                <input type="text" id="mp3CidInput" placeholder="e.g. bafybei... or https://files.example.com/track.mp3" autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" spellcheck="false">
+                <p class="hint">Paste an IPFS CID, or a direct URL from any host (Catbox, Dropbox, personal server, etc.) &mdash; skips Pinata entirely.</p>
             </div>
 
             <div class="form-group">
-                <label>Artwork IPFS CID (optional)</label>
-                <input type="text" id="artworkCidInput" placeholder="e.g. bafybeicy5dta..." autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" spellcheck="false">
+                <label>Artwork Link (IPFS CID or direct URL, optional)</label>
+                <input type="text" id="artworkCidInput" placeholder="e.g. bafybeicy5dta... or https://i.imgur.com/art.png" autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" spellcheck="false">
                 <p class="hint">If empty, default DeroBeats artwork is auto-assigned.</p>
             </div>
 
@@ -1100,21 +1100,21 @@
             const jwt = jwtInput.value.trim();
             const mp3Cid = (document.getElementById('mp3CidInput')?.value || '').trim();
 
-            const hasDirectCid = mp3Cid.length > 10;
+            const hasDirectLink = mp3Cid.length > 10;
 
-            if (!hasDirectCid && (!file || !jwt)) {
-                showError('Either select a file + enter your Pinata JWT, or paste an MP3 CID directly.');
+            if (!hasDirectLink && (!file || !jwt)) {
+                showError('Either select a file + enter your Pinata JWT, or paste an MP3 CID / URL directly.');
                 return;
             }
 
             uploadBtn.disabled = true;
-            uploadBtn.textContent = hasDirectCid ? 'Processing...' : 'Uploading...';
+            uploadBtn.textContent = hasDirectLink ? 'Processing...' : 'Uploading...';
             resultBox.classList.remove('show');
             errorBox.classList.remove('show');
 
             let hash, response, data;
 
-            if (hasDirectCid) {
+            if (hasDirectLink) {
                 hash = mp3Cid;
             }
 
@@ -1200,7 +1200,9 @@
                 if (!hash) throw new Error('Upload succeeded but no hash returned.');
             }
 
-                const gatewayUrl = `https://gateway.pinata.cloud/ipfs/${hash}`;
+                const gatewayUrl = (hash.startsWith('http://') || hash.startsWith('https://'))
+                    ? hash
+                    : `https://gateway.pinata.cloud/ipfs/${hash}`;
 
                 let contentHash = '';
                 let durationSec = 0;
@@ -1236,7 +1238,9 @@
                 const artworkFile = document.getElementById('artworkInput')?.files?.[0];
                 if (artworkCid) {
                     artworkHash = artworkCid;
-                    artworkUrl = `https://gateway.pinata.cloud/ipfs/${artworkHash}`;
+                    artworkUrl = (artworkCid.startsWith('http://') || artworkCid.startsWith('https://'))
+                        ? artworkCid
+                        : `https://gateway.pinata.cloud/ipfs/${artworkHash}`;
                 } else if (artworkFile && jwt) {
                     uploadBtn.textContent = 'Uploading artwork...';
                     const awForm = new FormData();
@@ -1282,7 +1286,7 @@
                 const songId = Array.from(new Uint8Array(songIdDigest)).map(b => b.toString(16).padStart(2, '0')).join('').toLowerCase();
 
                 const successLine = document.getElementById('resultSuccessLine');
-                if (successLine) successLine.textContent = hasDirectCid ? '✓ CID verified' : '✓ Uploaded to IPFS';
+                if (successLine) successLine.textContent = hasDirectLink ? '✓ Link verified' : '✓ Uploaded to IPFS';
 
                 ipfsHashEl.textContent = hash;
                 gatewayUrlEl.textContent = gatewayUrl;

@@ -85,8 +85,14 @@ let _gatewayIndex = parseInt(localStorage.getItem("derobeats_gw_idx"), 10) || 0;
 if (_gatewayIndex >= IPFS_GATEWAYS.length) _gatewayIndex = 0;
 const IPFS_GATEWAY = IPFS_GATEWAYS[_gatewayIndex];
 
-function ipfsUrl(cid) {
-    return `${IPFS_GATEWAYS[_gatewayIndex]}/${cid}`;
+function isDirectUrl(val) {
+    return val && (val.startsWith("http://") || val.startsWith("https://"));
+}
+
+function resolveMediaUrl(val) {
+    if (!val) return "";
+    if (isDirectUrl(val)) return val;
+    return `${IPFS_GATEWAYS[_gatewayIndex]}/${val}`;
 }
 
 const DEFAULT_ART_LOCAL = "https://raw.githubusercontent.com/KalinaLux/derobeats/main/img/default-art.png";
@@ -881,8 +887,8 @@ function flushHashAccumulator() {
 
 // Demo song placeholder (Pixi.exe) - used when registry is empty
 function getDemoSongHtml() {
-    const artwork = ipfsUrl("bafybeieqp3vmodc6uevywxgrruedji4bjq7fo2dgdxaid777hzwvox7fqa");
-    const audio = ipfsUrl("bafybeia3lsbqkt5vhpjpooxjiaaox3ce26mbkakvf5wwjehsls5gfp6auu");
+    const artwork = resolveMediaUrl("bafybeieqp3vmodc6uevywxgrruedji4bjq7fo2dgdxaid777hzwvox7fqa");
+    const audio = resolveMediaUrl("bafybeia3lsbqkt5vhpjpooxjiaaox3ce26mbkakvf5wwjehsls5gfp6auu");
     const artistAddr = "dero1qygfgg5hq4fracps4q8cxwzvyjvmh85kewfwc75nxnfpg6grsr4nyqqket86l";
     return `
 <div class="song-card song-card-demo">
@@ -1139,15 +1145,15 @@ function renderSortedSongs(filterValue) {
     const paginated = sorted.slice(0, _visibleCount);
 
     grid.innerHTML = paginated.map((s, idx) => {
-        const audioUrl = ipfsUrl(s.ipfsHash);
+        const audioUrl = resolveMediaUrl(s.ipfsHash);
         const artCid = s.previewArtCid || "";
-        const artworkSrc = artCid ? ipfsUrl(artCid) : DEFAULT_ART_LOCAL;
+        const artworkSrc = artCid ? resolveMediaUrl(artCid) : DEFAULT_ART_LOCAL;
         const playerId = "player-reg-" + idx;
         const durationTag = s.duration && parseInt(s.duration, 10) > 0 ? `<span class="tag">${formatDuration(s.duration)}</span>` : "";
         return `
 <div class="song-card" data-dynamic="true">
     <div class="song-artwork">
-        <img src="${escapeHtml(artworkSrc)}" alt="${escapeHtml(s.title)} artwork" ${artCid ? `data-cid="${escapeHtml(artCid)}" onerror="tryNextGateway(this,'${escapeHtml(artCid)}',false)"` : ""}>
+        <img src="${escapeHtml(artworkSrc)}" alt="${escapeHtml(s.title)} artwork" ${artCid && !isDirectUrl(artCid) ? `data-cid="${escapeHtml(artCid)}" onerror="tryNextGateway(this,'${escapeHtml(artCid)}',false)"` : ""}>
     </div>
     <div class="song-info">
         <h3 class="song-title">${escapeHtml(s.title)}</h3>
@@ -1160,7 +1166,7 @@ function renderSortedSongs(filterValue) {
     </div>
     <div class="player-section">
         <audio class="audio-player" id="${playerId}" controls data-cid="${escapeHtml(s.ipfsHash)}">
-            <source src="${escapeHtml(audioUrl)}" type="audio/mpeg" onerror="tryNextGateway(this.parentElement,'${escapeHtml(s.ipfsHash)}',true)">
+            <source src="${escapeHtml(audioUrl)}" type="audio/mpeg" ${isDirectUrl(s.ipfsHash) ? "" : `onerror="tryNextGateway(this.parentElement,'${escapeHtml(s.ipfsHash)}',true)"`}>
         </audio>
     </div>
     <div class="mining-section">
@@ -1340,10 +1346,10 @@ function reorderPlaylist(id, newSongIds) {
     if (pl) { pl.songIds = newSongIds; pl.updated = Date.now(); savePlaylists(); }
 }
 function getPlaylistArtwork(pl) {
-    if (pl.artworkCid) return ipfsUrl(pl.artworkCid);
+    if (pl.artworkCid) return resolveMediaUrl(pl.artworkCid);
     if (pl.songIds.length) {
         const first = _loadedSongs.find(s => s.songId === pl.songIds[0]);
-        if (first?.previewArtCid) return ipfsUrl(first.previewArtCid);
+        if (first?.previewArtCid) return resolveMediaUrl(first.previewArtCid);
     }
     return DEFAULT_ART_LOCAL;
 }
@@ -1428,19 +1434,19 @@ function renderPlaylistSongs(pl) {
     }
 
     html += songs.map((s, idx) => {
-        const audioUrl = ipfsUrl(s.ipfsHash);
+        const audioUrl = resolveMediaUrl(s.ipfsHash);
         const artCid = s.previewArtCid || "";
-        const artworkSrc = artCid ? ipfsUrl(artCid) : DEFAULT_ART_LOCAL;
+        const artworkSrc = artCid ? resolveMediaUrl(artCid) : DEFAULT_ART_LOCAL;
         const playerId = "player-pl-" + idx;
         return `<div class="playlist-song-item" draggable="true" data-song-id="${s.songId}" data-pl-idx="${idx}">
     <span class="playlist-drag-handle" title="Drag to reorder">&#9776;</span>
-    <img class="playlist-song-thumb" src="${escapeHtml(artworkSrc)}" alt="" ${artCid ? `data-cid="${escapeHtml(artCid)}" onerror="tryNextGateway(this,'${escapeHtml(artCid)}',false)"` : ""}>
+    <img class="playlist-song-thumb" src="${escapeHtml(artworkSrc)}" alt="" ${artCid && !isDirectUrl(artCid) ? `data-cid="${escapeHtml(artCid)}" onerror="tryNextGateway(this,'${escapeHtml(artCid)}',false)"` : ""}>
     <div class="playlist-song-info">
         <span class="playlist-song-title">${escapeHtml(s.title)}</span>
         <span class="playlist-song-artist">${escapeHtml(s.artist)}</span>
     </div>
     <audio class="audio-player playlist-audio" id="${playerId}" controls data-cid="${escapeHtml(s.ipfsHash)}">
-        <source src="${escapeHtml(audioUrl)}" type="audio/mpeg" onerror="tryNextGateway(this.parentElement,'${escapeHtml(s.ipfsHash)}',true)">
+        <source src="${escapeHtml(audioUrl)}" type="audio/mpeg" ${isDirectUrl(s.ipfsHash) ? "" : `onerror="tryNextGateway(this.parentElement,'${escapeHtml(s.ipfsHash)}',true)"`}>
     </audio>
     <button class="mine-btn" style="display:none" data-artist="${escapeHtml(s.artistAddr)}" data-song-id="pl-${idx}" data-song-scid="${s.songId}" data-hashes="${MINE_HASHES_PER_TICK}" data-song-name="${escapeHtml(s.title)}"></button>
     <button class="playlist-remove-song-btn" data-song-id="${s.songId}" title="Remove from playlist">&times;</button>
