@@ -883,9 +883,10 @@ async function donateSong(songSCID, artistName) {
         if (result && result.gasstorage > 0) {
             fees = Math.max(Math.ceil(result.gasstorage * 2), 1000);
         }
-        sendRequest("transfer", {
-            scid: registryScid, sc_id: registryScid, ringsize: 2, fees: fees,
-            transfers: [{ destination: userAddress, scid: "0000000000000000000000000000000000000000000000000000000000000000", amount: 0, burn: amountAtomic }],
+        sendRequest("scinvoke", {
+            scid: registryScid,
+            ringsize: 2,
+            sc_dero_deposit: amountAtomic,
             sc_rpc: scRpc
         });
         showNotification(`Approve ${amountFloat} DERO donation in Engram`, "info");
