@@ -885,7 +885,7 @@ async function donateSong(songSCID, artistName) {
         }
         sendRequest("transfer", {
             scid: registryScid, sc_id: registryScid, ringsize: 2, fees: fees,
-            transfers: [{ scid: "0000000000000000000000000000000000000000000000000000000000000000", burn: amountAtomic }],
+            transfers: [{ destination: userAddress, scid: "0000000000000000000000000000000000000000000000000000000000000000", amount: 0, burn: amountAtomic }],
             sc_rpc: scRpc
         });
         showNotification(`Approve ${amountFloat} DERO donation in Engram`, "info");
