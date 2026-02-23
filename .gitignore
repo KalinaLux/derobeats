@@ -9,6 +9,10 @@
 !derobeats-registry-mv5.bas
 graveyard-bas/
 
+# Tela deployment (internal records)
+tela-deploy/
+tela-live/
+
 # Dev-only assets
 artwork/
 style-switcher.html

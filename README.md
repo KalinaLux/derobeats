@@ -39,6 +39,15 @@ Listener donates    --> DERO sent directly to artist address
 Listener upvotes    --> On-chain vote recorded (1 per wallet)
 ```
 
+## Storage Philosophy
+
+DeroBeats is designed to minimize on-chain footprint. No music or artwork is stored on the blockchain. All media lives on IPFS or artist-hosted URLs. The only on-chain data is:
+
+- **Registry smart contract** -- song metadata (title, artist address, CID pointers, genre). No media content.
+- **Tela site DOCs** -- the compressed site interface (~50KB across 7 DOCs). No shards.
+
+The chain knows *where* to find the music, not the music itself. If you're building on Dero, please consider the same approach -- store pointers, not payloads.
+
 ## Smart Contract (MV5)
 
 Registry SCID: `88aa9c31ca557eb87fe0ff4c1f077fd5a41c0613f63090c58f82d0452929929c`
@@ -58,7 +67,9 @@ The contract source is in [`derobeats-registry-mv5.bas`](derobeats-registry-mv5.
 
 ### Tela
 
-DeroBeats is designed to run as a Tela site on DERO. The site files (`index.html`, `upload.html`, `css/`, `js/`) get sharded on-chain and served natively through any Tela-compatible browser.
+DeroBeats is deployed as a Tela site on DERO. All site files are stored as individual compressed DOCs (no sharding required) and served natively through any Tela-compatible client.
+
+INDEX SCID: `b1e1cba50cbfd8edbb12b01220ffebbece300d4936516a87fc2255fa8e23d8a2`
 
 ### Standalone (Engram + XSWD)
 
@@ -83,7 +94,8 @@ You can also run DeroBeats as a regular website:
 index.html              Main app (player, registry, playlists)
 upload.html             Track upload + registration flow
 css/style.css           All styles
-js/app.js               App logic (wallet, registry, mining, playlists)
+js/app-core.js          App logic pt1 (wallet, registry, mining, rendering)
+js/app-ui.js            App logic pt2 (playlists, media session, UI events)
 js/xswd.js              XSWD WebSocket helper
 sw.js                   Service worker (IPFS multi-gateway cache + failover)
 derobeats-registry-mv5.bas   Smart contract source (DVM-BASIC)
