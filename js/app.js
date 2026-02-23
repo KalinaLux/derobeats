@@ -853,46 +853,26 @@ async function removeSong(songSCID) {
     showNotification("⛽ Estimating gas...", "info");
 }
 
-// Donate DERO to artist
-async function donateSong(songSCID, artistName) {
+// Donate DERO directly to artist
+async function donateSong(songSCID, artistName, artistAddr) {
     if (!epochVerified || !isConnected) {
         showNotification("Complete EPOCH verification first", "error");
         return;
     }
-    const norm = normalizeSongId(songSCID);
-    if (!norm.ok) { showNotification(norm.error, "error"); return; }
+    if (!artistAddr) {
+        showNotification("Artist address not found", "error");
+        return;
+    }
     const amountStr = await plPrompt(`Donate DERO to ${artistName || "this artist"}`, "1");
     if (!amountStr || !amountStr.trim()) return;
     const amountFloat = parseFloat(amountStr.trim());
     if (isNaN(amountFloat) || amountFloat <= 0) { showNotification("Enter a valid amount", "error"); return; }
     const amountAtomic = Math.round(amountFloat * 100000);
-
-    const scRpc = [
-        { name: "entrypoint", datatype: "S", value: "Donate" },
-        { name: "songSCID", datatype: "S", value: norm.value }
-    ];
-    const gasRpc = [
-        ...scRpc,
-        { name: "SC_ACTION", datatype: "U", value: 0 },
-        { name: "SC_ID", datatype: "H", value: registryScid }
-    ];
-    const gasId = "gas_donate_" + Date.now();
-    _pendingGasCallbacks[gasId] = (result, error) => {
-        delete _pendingGasCallbacks[gasId];
-        let fees = 2000;
-        if (result && result.gasstorage > 0) {
-            fees = Math.max(Math.ceil(result.gasstorage * 2), 1000);
-        }
-        sendRequest("scinvoke", {
-            scid: registryScid,
-            ringsize: 2,
-            sc_dero_deposit: amountAtomic,
-            sc_rpc: scRpc
-        });
-        showNotification(`Approve ${amountFloat} DERO donation in Engram`, "info");
-    };
-    socket.send(JSON.stringify({ jsonrpc: "2.0", id: gasId, method: "DERO.GetGasEstimate", params: { transfers: [{ scid: registryScid, amount: amountAtomic }], sc_rpc: gasRpc, ringsize: 2, signer: userAddress } }));
-    showNotification("Estimating gas...", "info");
+    sendRequest("transfer", {
+        transfers: [{ destination: artistAddr, amount: amountAtomic }],
+        ringsize: 16
+    });
+    showNotification(`Approve ${amountFloat} DERO donation to ${artistName} in Engram`, "info");
 }
 
 // Record hashes on-chain for a single song
@@ -1061,7 +1041,7 @@ function attachSongEventHandlers(container) {
     });
     container.querySelectorAll(".donate-btn").forEach(btn => {
         btn.addEventListener("click", function() {
-            donateSong(this.dataset.songScid, this.dataset.artistName);
+            donateSong(this.dataset.songScid, this.dataset.artistName, this.dataset.artistAddr);
         });
     });
     container.querySelectorAll(".playlist-add-btn").forEach(btn => {
@@ -1260,7 +1240,7 @@ function renderSortedSongs(filterValue) {
         <div class="song-actions">
             <button class="playlist-add-btn" data-song-id="${s.songId}" title="Add to playlist">+</button>
             <button class="upvote-btn button-ghost" data-song-scid="${s.songId}">👍 Upvote</button>
-            <button class="donate-btn button-ghost" data-song-scid="${s.songId}" data-artist-name="${escapeHtml(s.artist)}" title="Donate DERO to artist">Donate</button>
+            <button class="donate-btn button-ghost" data-song-scid="${s.songId}" data-artist-name="${escapeHtml(s.artist)}" data-artist-addr="${escapeHtml(s.artistAddr)}" title="Donate DERO to artist">Donate</button>
             <button class="remove-btn button-ghost" data-song-scid="${s.songId}" title="Remove song (artist or owner)">🗑️ Remove</button>
         </div>
         <div class="mining-stats">
